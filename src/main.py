@@ -1,3 +1,11 @@
+"""
+main.py
+
+This script is the main entry point for the protocol execution. It handles
+command-line arguments and validates the protocol configuration. This
+information is passed to the Docker manager.
+"""
+
 import argparse
 import os
 import json
@@ -9,7 +17,7 @@ def parse_config(config_path):
     program with an error message.
 
     @param config_path: Path to the configuration file.
-    @return: Parsed configuration data (dictionary).
+    @return: Parsed configuration data.
     """
     try:
         with open(config_path, 'r') as file:
@@ -28,7 +36,7 @@ def validate_config(config):
     Validate the configuration data. In case of an invalid configuration, exit
     the program with an error message.
 
-    @param config: Parsed configuration data (dictionary).
+    @param config: Parsed configuration data.
     """
     required_keys = ["run", "args", "image"]
     for key in required_keys:
@@ -37,31 +45,85 @@ def validate_config(config):
             exit(1)
 
 
-if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="Name of the protocol")
+def parse_arguments():
+    """
+    Parse command-line arguments.
+
+    @return: Parsed arguments.
+    """
+    parser = argparse.ArgumentParser(description="snnif")
     parser.add_argument("--name", "-n", type=str, help="Protocol name")
     parser.add_argument("--config", "-c", type=str,
                         help="Path to the configuration file")
-    args = parser.parse_args()
+    parser.add_argument("--verbose", "-v", action="store_true",
+                        help="Enable verbose output")
+    return parser.parse_args()
 
-    if not args.name:
-        print("Missing protocol name")
-        exit(1)
 
-    print(f"Protocol name: {args.name}")
+def get_protocol_path(protocol_name):
+    """
+    Get the protocol path based on the protocol name.
 
-    protocol_path = os.path.join(os.getcwd(), "protocols", args.name)
+    @param protocol_name: Name of the protocol.
+    @return: Path to the protocol folder.
+    """
+    protocol_path = os.path.join(os.getcwd(), "protocols", protocol_name)
     if not os.path.exists(protocol_path):
         print(f"Protocol folder '{protocol_path}' does not exist")
         exit(1)
+    return protocol_path
 
-    if args.config:
-        config_path = os.path.abspath(args.config)
+
+def get_config_path(protocol_path, config_arg):
+    """
+    Get the configuration file path.
+
+    @param protocol_path: Path to the protocol folder.
+    @param config_arg: Command-line argument for the config file.
+    @return: Path to the configuration file.
+    """
+    if config_arg:
+        config_path = os.path.abspath(config_arg)
     else:
         config_path = os.path.join(protocol_path, "config.json")
+
     if not os.path.exists(config_path):
-        print(f"Protocol config file '{config_path}' does not exist")
+        print(f"Error: protocol config file '{config_path}' does not exist")
         exit(1)
+
+    return config_path
+
+
+def display_verbose_info(protocol_name, config):
+    """
+    Display verbose information about the protocol and configuration.
+
+    @param protocol_name: Name of the protocol.
+    @param config: Configuration data.
+    """
+    print("== Protocol name ==")
+    print(protocol_name)
+    print()
+    print("== Selected configuration ==")
+    for key, value in config.items():
+        print(f"{key}\t\t{value}")
+
+
+if __name__ == "__main__":
+    args = parse_arguments()
+
+    if not args.name:
+        print("Error: missing protocol name")
+        exit(1)
+
+    protocol_path = get_protocol_path(args.name)
+    config_path = get_config_path(protocol_path, args.config)
 
     config = parse_config(config_path)
     validate_config(config)
+    config["name"] = args.name
+    config["path"] = protocol_path
+    config["verbose"] = args.verbose
+
+    if args.verbose:
+        display_verbose_info(args.name, config)
