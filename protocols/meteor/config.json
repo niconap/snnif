@@ -1,5 +1,7 @@
 {
-    "run": "meteor",
-    "args": "-p 5",
+    "run": "make",
+    "args": [
+        "terminal"
+    ],
     "image": "meteor-image"
 }

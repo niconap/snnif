@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 """
 main.py
 
@@ -9,6 +10,7 @@ information is passed to the Docker manager.
 import argparse
 import os
 import json
+
 from docker_manager import DockerManager
 
 
@@ -41,7 +43,7 @@ def validate_config(config):
     """
     required_keys = ["run", "args", "image"]
     for key in required_keys:
-        if key not in config or not config[key]:
+        if key not in config or config[key] == '':
             print(f"Missing required key '{key}' in configuration.")
             exit(1)
 
@@ -124,6 +126,7 @@ def run_protocol(config):
     """
     docker_manager = DockerManager(config)
     docker_manager.build_image()
+    docker_manager.run_container()
 
 
 if __name__ == "__main__":

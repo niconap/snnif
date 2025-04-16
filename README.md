@@ -14,6 +14,16 @@
 - `protocols` - Contains the Dockerfiles for the protocols
 - `src` - Contains the source code for snnif.
 
+### Usage
+
+To run the framework, use the following command:
+
+```bash
+source setup.sh
+```
+
+This will setup a virtual environment and install the required Python packages.
+
 ### Included protocols
 
 Currently, the following protocols are included by default in this framework:
