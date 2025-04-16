@@ -1,0 +1,5 @@
+{
+    "run": "meteor",
+    "args": "-p 5",
+    "image": "meteor-image"
+}
