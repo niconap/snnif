@@ -9,6 +9,7 @@ information is passed to the Docker manager.
 import argparse
 import os
 import json
+from docker_manager import DockerManager
 
 
 def parse_config(config_path):
@@ -57,6 +58,11 @@ def parse_arguments():
                         help="Path to the configuration file")
     parser.add_argument("--verbose", "-v", action="store_true",
                         help="Enable verbose output")
+    parser.add_argument("--built", "-b", action="store_true",
+                        help=(
+                            "Specify if the Docker image has already been "
+                            "built"
+                        ))
     return parser.parse_args()
 
 
@@ -107,6 +113,17 @@ def display_verbose_info(protocol_name, config):
     print("== Selected configuration ==")
     for key, value in config.items():
         print(f"{key}\t\t{value}")
+    print()
+
+
+def run_protocol(config):
+    """
+    Run the protocol using Docker.
+
+    @param config: Configuration data.
+    """
+    docker_manager = DockerManager(config)
+    docker_manager.build_image()
 
 
 if __name__ == "__main__":
@@ -124,6 +141,9 @@ if __name__ == "__main__":
     config["name"] = args.name
     config["path"] = protocol_path
     config["verbose"] = args.verbose
+    config["built"] = args.built
 
     if args.verbose:
         display_verbose_info(args.name, config)
+
+    run_protocol(config)
