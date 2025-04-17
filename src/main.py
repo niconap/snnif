@@ -41,7 +41,7 @@ def validate_config(config):
 
     @param config: Parsed configuration data.
     """
-    required_keys = ["run", "args", "image"]
+    required_keys = ["run", "image"]
     for key in required_keys:
         if key not in config or config[key] == '':
             print(f"Missing required key '{key}' in configuration.")
@@ -127,6 +127,12 @@ def run_protocol(config):
     docker_manager = DockerManager(config)
     docker_manager.build_image()
     docker_manager.run_container()
+    time1 = docker_manager.run_command("date +%s%3N")
+    command = config["run"]
+    docker_manager.run_command(command)
+    time2 = docker_manager.run_command("date +%s%3N")
+    docker_manager.stop_container()
+    print((int(time2) - int(time1)) / 1000.0, "second(s) elapsed")
 
 
 if __name__ == "__main__":

@@ -4,9 +4,9 @@
 
 - `docker` - Required to build and run the Docker containers.
   - This can be installed using Docker Desktop, view the instructions
-    [here](https://www.docker.com/products/docker-desktop). For this framework,
-    version 28.0.4 was used for testing.
-- `python` - Required to urn the framework.
+    [here](https://www.docker.com/products/docker-desktop). This framework was
+    tested with Docker 28.0.4.
+- `python` - Required to run the framework.
   - This framework was tested with Python 3.12.3.
 
 ### Directories
@@ -21,6 +21,9 @@ To run the framework, use the following command:
 ```bash
 source setup.sh
 ```
+
+`source` is used here to activate the virtual environment automatically. Remove
+it in case you want to use a different virtual environment.
 
 This will setup a virtual environment and install the required Python packages.
 
@@ -43,28 +46,30 @@ In order to add a protocol to the framework, two files are required. Inside the
 this directory, add a `Dockerfile` and a `config.json` file.
 
 The `Dockerfile` should contain the instructions to build the Docker image for
-the protocol along with the necessary dependencies. An example for the FALCON
+the protocol along with the necessary dependencies. **It is important to install
+`nethogs` in the container to monitor network usage.** An example for the FALCON
 protocol:
 
 ```dockerfile
-# Use Ubuntu 18.04 as the base image
+# Use Ubuntu 18.04 as the base image, if necessary, choose a different version
 FROM ubuntu:18.04
 
-# Install the necessary dependencies
+# Install the necessary dependencies, make sure to include nethogs
 RUN apt-get update \
-    && apt-get install -y \
-    git \
-    make \
-    g++ \
-    libssl-dev \
-    && rm -r /var/lib/apt/lists/*
+  && apt-get install -y \
+  git \
+  make \
+  g++ \
+  libssl-dev \
+  nethogs \
+  && rm -r /var/lib/apt/lists/*
 
 # Clone the FALCON repository
 RUN git clone https://github.com/snwagh/falcon-public.git Falcon
 
 # Build the FALCON protocol
 RUN cd Falcon \
-    && make all -j$(nproc)
+  && make all -j$(nproc)
 
 # Set the working directory to the FALCON directory
 WORKDIR Falcon
@@ -73,9 +78,10 @@ WORKDIR Falcon
 The `config.json` file should contain the configuration for the protocol. It
 should be in JSON format and should contain the following fields:
 
-- `run` - The command to run the protocol
-- `args` - The arguments to pass to the protocol, this should be a list of
-  strings
+- `run` - The command to run the protocol, this includes its arguments
+  - In case it is necessary to run multiple instances of the protocol (e.g. one
+    for each party), you can run each one in a sub-shell. See the configuration
+    file for METEOR for an example.
 - `image` - The name of the Docker image to build
 
 ### Compatibility

@@ -1,7 +1,4 @@
 {
-    "run": "make",
-    "args": [
-        "terminal"
-    ],
+    "run": "bash -c '(make zero) & (make one) & (make two); wait'",
     "image": "meteor-image"
 }
