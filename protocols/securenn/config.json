@@ -1,0 +1,4 @@
+{
+    "run": "make abcTerminal",
+    "image": "securenn-image"
+}

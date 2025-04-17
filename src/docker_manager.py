@@ -93,11 +93,18 @@ class DockerManager:
             try:
                 output = self._container.exec_run(
                     command,
-                    environment={"PROTOCOL_ARGS": " ".join(self._args)}
+                    environment={"PROTOCOL_ARGS": " ".join(self._args)},
+                    stream=True,
+                    tty=True
                 )
                 if self._verbose:
                     print("Command executed successfully.")
-                return output.output.decode('utf-8').strip()
+                output_lines = []
+                for line in output.output:
+                    decoded = line.decode('utf-8').rstrip()
+                    print(decoded)
+                    output_lines.append(decoded)
+                return "\n".join(output_lines)
             except docker.errors.APIError as e:
                 print(f"Error executing command: {e}")
                 exit(1)

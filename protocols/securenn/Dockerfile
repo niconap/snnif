@@ -6,6 +6,7 @@ RUN apt-get update \
     make \
     g++ \
     libssl-dev \
+    xterm \
     && rm -r /var/lib/apt/lists/*
 
 RUN git clone https://github.com/snwagh/securenn-public.git SecureNN
