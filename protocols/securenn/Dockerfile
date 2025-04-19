@@ -7,6 +7,8 @@ RUN apt-get update \
     g++ \
     libssl-dev \
     xterm \
+    python3 \
+    python3-pip \
     && rm -r /var/lib/apt/lists/*
 
 RUN git clone https://github.com/snwagh/securenn-public.git SecureNN

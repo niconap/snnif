@@ -128,8 +128,12 @@ def run_protocol(config):
     docker_manager.build_image()
     docker_manager.run_container()
     time1 = docker_manager.run_command("date +%s%3N")
-    command = config["run"]
-    docker_manager.run_command(command)
+    docker_manager.copy_file(
+        os.path.join(os.path.dirname(__file__), "protocol_manager.py"),
+        "Meteor"  # Copy to the working directory
+    )
+    docker_manager.run_command(
+        f'python3 protocol_manager.py --command "{config["run"]}"')
     time2 = docker_manager.run_command("date +%s%3N")
     docker_manager.stop_container()
     print((int(time2) - int(time1)) / 1000.0, "second(s) elapsed")

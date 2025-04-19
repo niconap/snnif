@@ -8,6 +8,10 @@ communication with the Docker daemon and manages the lifecycle of
 containers.
 """
 
+import tarfile
+import io
+import os
+
 import docker
 
 
@@ -97,13 +101,14 @@ class DockerManager:
                     stream=True,
                     tty=True
                 )
-                if self._verbose:
-                    print("Command executed successfully.")
+
                 output_lines = []
                 for line in output.output:
                     decoded = line.decode('utf-8').rstrip()
-                    print(decoded)
+                    if self._verbose:
+                        print(decoded)
                     output_lines.append(decoded)
+
                 return "\n".join(output_lines)
             except docker.errors.APIError as e:
                 print(f"Error executing command: {e}")
@@ -115,6 +120,38 @@ class DockerManager:
             print("Container is not running. Cannot execute command.")
             exit(1)
         return None
+
+    def copy_file(self, src, dest):
+        """
+        Copy a file from the host to the Docker container.
+
+        :param src: Source file path on the host.
+        :param dest: Destination directory path inside the container.
+        """
+        if self._container:
+            if self._verbose:
+                print(f"Copying file '{src}' to container '{dest}'...")
+
+            try:
+                # Create a tar archive in memory
+                tar_stream = io.BytesIO()
+                with tarfile.open(fileobj=tar_stream, mode='w') as tar:
+                    tar.add(src, arcname=os.path.basename(src))
+                tar_stream.seek(0)
+
+                # Send the tar archive to the container
+                self._container.put_archive(dest, tar_stream)
+                if self._verbose:
+                    print(f"File '{src}' copied successfully to '{dest}'.")
+            except docker.errors.APIError as e:
+                print(f"Error copying file: {e}")
+                exit(1)
+            except Exception as e:
+                print(f"Unexpected error: {e}")
+                exit(1)
+        else:
+            print("Container is not running. Cannot copy file.")
+            exit(1)
 
     def run_container(self):
         """
@@ -133,7 +170,6 @@ class DockerManager:
                 tty=True,
                 auto_remove=False,
                 volumes={self._path: {'bind': '/data', 'mode': 'rw'}},
-                environment={"PROTOCOL_ARGS": " ".join(self._args)}
             )
 
             if self._verbose:

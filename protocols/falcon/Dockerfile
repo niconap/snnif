@@ -6,6 +6,8 @@ RUN apt-get update \
     make \
     g++ \
     libssl-dev \
+    python3 \
+    python3-pip \
     && rm -r /var/lib/apt/lists/*
 
 RUN git clone https://github.com/snwagh/falcon-public.git Falcon
