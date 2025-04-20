@@ -6,6 +6,7 @@ RUN apt-get update \
     make \
     g++ \
     libssl-dev \
+    nethogs \
     python3 \
     python3-pip \
     && rm -r /var/lib/apt/lists/*

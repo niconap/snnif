@@ -121,6 +121,34 @@ class DockerManager:
             exit(1)
         return None
 
+    def retrieve_file(self, src, dest):
+        """
+        Retrieve a file from the Docker container to the host.
+
+        :param src: Source file path inside the container.
+        :param dest: Destination directory path on the host.
+        """
+        if self._container:
+            if self._verbose:
+                print(f"Retrieving file '{src}' from container...")
+
+            try:
+                bits, stat = self._container.get_archive(src)
+                with open(dest, 'wb') as f:
+                    for chunk in bits:
+                        f.write(chunk)
+                if self._verbose:
+                    print(f"File '{src}' retrieved successfully.")
+            except docker.errors.APIError as e:
+                print(f"Error retrieving file: {e}")
+                exit(1)
+            except Exception as e:
+                print(f"Unexpected error: {e}")
+                exit(1)
+        else:
+            print("Container is not running. Cannot retrieve file.")
+            exit(1)
+
     def copy_file(self, src, dest):
         """
         Copy a file from the host to the Docker container.

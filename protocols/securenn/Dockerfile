@@ -7,6 +7,7 @@ RUN apt-get update \
     g++ \
     libssl-dev \
     xterm \
+    nethogs \
     python3 \
     python3-pip \
     && rm -r /var/lib/apt/lists/*

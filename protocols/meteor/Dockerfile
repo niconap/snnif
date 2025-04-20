@@ -6,6 +6,7 @@ RUN apt-get update \
     make \
     g++ \
     libssl-dev \
+    nethogs \
     python3 \
     python3-pip \
     && rm -r /var/lib/apt/lists/*
@@ -14,7 +15,5 @@ RUN git clone https://github.com/Ye-D/Meteor.git Meteor
 
 RUN cd Meteor \
     && make all -j$(nproc)
-
-RUN pip3 install scapy
 
 WORKDIR Meteor

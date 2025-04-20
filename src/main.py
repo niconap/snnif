@@ -130,11 +130,16 @@ def run_protocol(config):
     time1 = docker_manager.run_command("date +%s%3N")
     docker_manager.copy_file(
         os.path.join(os.path.dirname(__file__), "protocol_manager.py"),
-        "Meteor"  # Copy to the working directory
+        "Meteor"
     )
-    docker_manager.run_command(
-        f'python3 protocol_manager.py --command "{config["run"]}"')
+    command = f'python3 protocol_manager.py --command "{config["run"]}"'
+    if config["verbose"]:
+        command += " --verbose"
+    docker_manager.run_command(command)
     time2 = docker_manager.run_command("date +%s%3N")
+    docker_manager.run_command("ls")
+    docker_manager.retrieve_file("Meteor/nethogs_output.txt", os.path.join(
+        os.getcwd(), "nethogs_output.txt"))
     docker_manager.stop_container()
     print((int(time2) - int(time1)) / 1000.0, "second(s) elapsed")
 

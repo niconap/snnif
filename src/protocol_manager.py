@@ -7,12 +7,11 @@ responsible for running the protocol and for taking measurements.
 """
 
 import argparse
-import sys
-import time
-
-from scapy.sendrecv import AsyncSniffer
 import subprocess
-from scapy.layers.inet import IP
+import time
+import os
+import signal
+import sys
 
 if __name__ == "__main__":
     def main():
@@ -22,36 +21,36 @@ if __name__ == "__main__":
         parser.add_argument("--verbose", action="store_true")
         args = parser.parse_args()
 
-        print("Starting sniffing...")
-        sniffer = AsyncSniffer(iface="lo", store=True)
-        sniffer.start()
-        start_time = time.time()
+        output_file = "nethogs_output.txt"
+        nethogs_cmd = ["nethogs", "lo", "-a", "-t", "-d", "0.5", "-v", "1"]
 
-        result = subprocess.run(args.command, shell=True)
-        if result.stderr:
-            print(f"Command error:\n{result.stderr}", file=sys.stderr)
+        with open(output_file, "w") as outfile:
+            nethogs_proc = subprocess.Popen(
+                nethogs_cmd,
+                stdout=outfile,
+                stderr=subprocess.DEVNULL,
+                preexec_fn=os.setsid
+            )
+            start_time = time.time()
 
-        stop_time = time.time()
+            result = subprocess.run(args.command, shell=True)
+            if result.stderr:
+                print(f"Command error:\n{result.stderr}", file=sys.stderr)
 
-        # Wait for a few seconds to ensure all packets are captured
-        time.sleep(3)
-        sniffer.stop()
-        packets = sniffer.results
+            stop_time = time.time()
+
+            time.sleep(3)
+
+            os.killpg(os.getpgid(nethogs_proc.pid), signal.SIGTERM)
+
         print(f"Running took {stop_time - start_time:.2f} seconds")
 
-        total_size = 0
-        for packet in packets:
-            packet_size = len(packet)
-            total_size += packet_size
-            if args.verbose:
-                if IP in packet:
-                    print(
-                        f"Packet: {packet[IP].summary()}, Size: {packet_size} bytes")
-                else:
-                    print(f"Unknown packet type, Size: {packet_size} bytes")
-
-        print(f"Total size of captured packets: {total_size} bytes")
-        print(f"Total number of packets: {len(packets)}")
+        if args.verbose:
+            print("Last 10 lines of nethogs output:")
+            with open(output_file, "r") as outfile:
+                lines = outfile.readlines()
+                for line in lines[-10:]:
+                    print(line.strip())
 
     try:
         main()
