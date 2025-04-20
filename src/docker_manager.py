@@ -123,22 +123,32 @@ class DockerManager:
 
     def retrieve_file(self, src, dest):
         """
-        Retrieve a file from the Docker container to the host.
+        Retrieve a file from the Docker container to the host and save it.
 
         :param src: Source file path inside the container.
-        :param dest: Destination directory path on the host.
+        :param dest: Destination file path on the host.
         """
         if self._container:
             if self._verbose:
                 print(f"Retrieving file '{src}' from container...")
 
             try:
-                bits, stat = self._container.get_archive(src)
-                with open(dest, 'wb') as f:
-                    for chunk in bits:
-                        f.write(chunk)
+                bits = self._container.get_archive(src)[0]
+
+                tar_stream = io.BytesIO()
+                for chunk in bits:
+                    tar_stream.write(chunk)
+                tar_stream.seek(0)
+
+                with tarfile.open(fileobj=tar_stream, mode='r') as tar:
+                    member = tar.getmembers()[0]
+                    file_content = tar.extractfile(member).read()
+
+                with open(dest, 'w', encoding='utf-8') as f:
+                    f.write(file_content.decode('utf-8'))
+
                 if self._verbose:
-                    print(f"File '{src}' retrieved successfully.")
+                    print(f"File '{src}' retrieved and saved to '{dest}'.")
             except docker.errors.APIError as e:
                 print(f"Error retrieving file: {e}")
                 exit(1)
@@ -161,13 +171,11 @@ class DockerManager:
                 print(f"Copying file '{src}' to container '{dest}'...")
 
             try:
-                # Create a tar archive in memory
                 tar_stream = io.BytesIO()
                 with tarfile.open(fileobj=tar_stream, mode='w') as tar:
                     tar.add(src, arcname=os.path.basename(src))
                 tar_stream.seek(0)
 
-                # Send the tar archive to the container
                 self._container.put_archive(dest, tar_stream)
                 if self._verbose:
                     print(f"File '{src}' copied successfully to '{dest}'.")

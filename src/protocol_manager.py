@@ -39,7 +39,8 @@ if __name__ == "__main__":
 
             stop_time = time.time()
 
-            time.sleep(3)
+            # Ensure that all traffic is captured by waiting for a second
+            time.sleep(1)
 
             os.killpg(os.getpgid(nethogs_proc.pid), signal.SIGTERM)
 
