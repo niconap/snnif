@@ -39,14 +39,33 @@ class DockerManager:
         self._verbose = config.get("verbose", False)
         self._path = config.get("path")
         self._built = config.get("built", False)
+        self.workdir = '/'
+
+        dockerfile_path = os.path.join(self._path, 'Dockerfile')
+        if os.path.exists(dockerfile_path):
+            with open(dockerfile_path, 'r', encoding='utf-8') as dockerfile:
+                workdir_line = next(
+                    (
+                        line for line in dockerfile
+                        if line.strip().startswith('WORKDIR')
+                    ),
+                    None
+                )
+                if workdir_line:
+                    self.workdir = workdir_line.split('WORKDIR', 1)[1].strip()
+                    if self._verbose:
+                        print(
+                            (f"WORKDIR set to '{self.workdir}' "
+                             f"from Dockerfile.")
+                        )
 
     def build_image(self):
         """
         Build the Docker image for the protocol. In case the user has used the
         built flag, this function will check if a build already exists instead.
         """
+        client = docker.from_env()
         if self._built:
-            client = docker.from_env()
             try:
                 client.images.get(self._image_name)
                 if self._verbose:
@@ -63,7 +82,6 @@ class DockerManager:
         if self._verbose:
             print(f"Building Docker image '{self._image_name}'...")
 
-        client = docker.from_env()
         try:
             for line in client.api.build(
                 path=self._path,
@@ -191,7 +209,8 @@ class DockerManager:
 
     def run_container(self):
         """
-        Start the Docker container with the specified configuration without running any command.
+        Start the Docker container with the specified configuration without
+        running any command.
 
         :return: The active Docker container object.
         """

@@ -47,8 +47,8 @@ this directory, add a `Dockerfile` and a `config.json` file.
 
 The `Dockerfile` should contain the instructions to build the Docker image for
 the protocol along with the necessary dependencies. **It is important to install
-`nethogs` in the container to monitor network usage.** An example for the FALCON
-protocol:
+`nethogs`, `python3` and `python3-pip` in the container.** An example for the
+_FALCON_ protocol:
 
 ```dockerfile
 # Use Ubuntu 18.04 as the base image, if necessary, choose a different version
@@ -62,6 +62,8 @@ RUN apt-get update \
   g++ \
   libssl-dev \
   nethogs \
+  python3 \
+  python3-pip \
   && rm -r /var/lib/apt/lists/*
 
 # Clone the FALCON repository
@@ -75,13 +77,17 @@ RUN cd Falcon \
 WORKDIR Falcon
 ```
 
+By default, the framework assumes the `WORKDIR` is the root directory of the
+container. It will look for the first line that specifies `WORKDIR`, and changes
+this default value if one is found.
+
 The `config.json` file should contain the configuration for the protocol. It
 should be in JSON format and should contain the following fields:
 
 - `run` - The command to run the protocol, this includes its arguments
   - In case it is necessary to run multiple instances of the protocol (e.g. one
     for each party), you can run each one in a sub-shell. See the configuration
-    file for METEOR for an example.
+    file for _Meteor_ for an example.
 - `image` - The name of the Docker image to build
 
 ### Compatibility
