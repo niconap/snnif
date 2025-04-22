@@ -23,9 +23,9 @@ class DataProcessor:
         self._iterations = config.get("iterations", 1)
         self._results = []
 
-    def process_nethogs(self):
+    def parse_nethogs(self):
         """
-        Process the nethogs output file and populate the results.
+        Parse and trim the nethogs output file and populate the results.
         """
         for i in range(self._iterations):
             self._results.append({})
@@ -61,6 +61,28 @@ class DataProcessor:
                             )
 
             self._trim_arrays(i)
+
+    def nethogs_averages(self):
+        """
+        Calculate the point wise averages of the data amounts for each party
+        across all iterations.
+        """
+        parties = self._results[0].keys()
+        averages = {party_id: [] for party_id in parties}
+        for i in range(self._iterations):
+            for party_id in parties:
+                if party_id in self._results[i]:
+                    data_amounts = self._results[i][party_id]
+                    if len(data_amounts) > 0:
+                        averages[party_id].append(data_amounts)
+
+        for party_id in parties:
+            if averages[party_id]:
+                averages[party_id] = np.mean(
+                    np.array(averages[party_id]), axis=0
+                ).tolist()
+
+        return averages
 
     def _trim_arrays(self, iteration):
         """
