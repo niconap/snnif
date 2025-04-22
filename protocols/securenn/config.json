@@ -1,4 +1,5 @@
 {
     "run": "make abcTerminal",
-    "image": "securenn-image"
+    "image": "securenn-image",
+    "execfile": "BMRPassive.out"
 }

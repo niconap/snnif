@@ -12,6 +12,7 @@ import os
 import json
 
 from docker_manager import DockerManager
+from data_processor import DataProcessor
 
 
 def parse_config(config_path):
@@ -41,7 +42,7 @@ def validate_config(config):
 
     @param config: Parsed configuration data.
     """
-    required_keys = ["run", "image"]
+    required_keys = ["run", "image", "execfile"]
     for key in required_keys:
         if key not in config or config[key] == '':
             print(f"Missing required key '{key}' in configuration.")
@@ -137,13 +138,26 @@ def run_protocol(config):
         command += " --verbose"
     docker_manager.run_command(command)
     time2 = docker_manager.run_command("date +%s%3N")
-    docker_manager.run_command("ls")
+    results_dir = os.path.join(os.getcwd(), "results")
+    if not os.path.exists(results_dir):
+        os.makedirs(results_dir)
+
     docker_manager.retrieve_file(
         f"{docker_manager.workdir}/nethogs_output.txt",
-        os.path.join(os.getcwd(), "nethogs_output.txt")
+        os.path.join(results_dir, "nethogs_output.txt")
     )
     docker_manager.stop_container()
     print((int(time2) - int(time1)) / 1000.0, "second(s) elapsed")
+
+
+def process_data(config):
+    """
+    Process the data after running the protocol.
+
+    @param config: Configuration data.
+    """
+    processor = DataProcessor(config)
+    processor.process_nethogs()
 
 
 if __name__ == "__main__":
@@ -167,3 +181,4 @@ if __name__ == "__main__":
         display_verbose_info(args.name, config)
 
     run_protocol(config)
+    process_data(config)

@@ -1,4 +1,5 @@
 {
     "run": "bash -c '(make zero) & (make one) & (make two); wait'",
-    "image": "falcon-image"
+    "image": "falcon-image",
+    "execfile": "Falcon.out"
 }

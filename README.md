@@ -89,6 +89,8 @@ should be in JSON format and should contain the following fields:
     for each party), you can run each one in a sub-shell. See the configuration
     file for _Meteor_ for an example.
 - `image` - The name of the Docker image to build
+- `execfile` - The name of the file to execute in the container (usually this
+  is`<name>.out`, but this depends on the protocol)
 
 ### Compatibility
 
