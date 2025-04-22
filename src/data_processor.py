@@ -20,44 +20,49 @@ class DataProcessor:
         :param config: Configuration data for the protocol.
         """
         self._execfile = config.get("execfile")
-        self._results = {}
+        self._iterations = config.get("iterations", 1)
+        self._results = []
 
     def process_nethogs(self):
         """
         Process the nethogs output file and populate the results.
         """
-        output_file = os.path.join(os.path.dirname(
-            __file__), "../results/nethogs_output.txt")
-        if not os.path.exists(output_file):
-            print("Error: nethogs_output.txt not found, "
-                  "please run the protocol first")
-            return
+        for i in range(self._iterations):
+            self._results.append({})
+            output_file = os.path.join(os.path.dirname(
+                __file__), f"../results/nethogs_{i}.txt")
+            if not os.path.exists(output_file):
+                print(f"Error: nethogs_{i}.txt not found, "
+                      "please run the protocol first")
+                return
 
-        with open(output_file, "r") as outfile:
-            lines = outfile.readlines()
-            for line in lines:
-                line = line.strip()
-                if line.startswith(f"./{self._execfile}"):
-                    parts = line.split()
-                    path_parts = parts[0].split("/")
-                    if len(path_parts) >= 3:
-                        party_id = path_parts[-2]
-                        data_amount = parts[1]
-                        if party_id not in self._results:
-                            max_length = max(
-                                (len(arr) for arr in self._results.values()),
-                                default=0)
-                            if max_length > 0:
-                                self._results[party_id] = [0] * max_length
-                            else:
-                                self._results[party_id] = []
-                        self._results[party_id].append(
-                            float(data_amount)
-                        )
+            with open(output_file, "r") as outfile:
+                lines = outfile.readlines()
+                for line in lines:
+                    line = line.strip()
+                    if line.startswith(f"./{self._execfile}"):
+                        parts = line.split()
+                        path_parts = parts[0].split("/")
+                        if len(path_parts) >= 3:
+                            party_id = path_parts[-2]
+                            data_amount = parts[1]
+                            if party_id not in self._results[i]:
+                                max_length = max(
+                                    (len(arr)
+                                     for arr in self._results[i].values()),
+                                    default=0)
+                                if max_length > 0:
+                                    self._results[i][party_id] = [
+                                        0] * max_length
+                                else:
+                                    self._results[i][party_id] = []
+                            self._results[i][party_id].append(
+                                float(data_amount)
+                            )
 
-        self._trim_arrays()
+            self._trim_arrays(i)
 
-    def _trim_arrays(self):
+    def _trim_arrays(self, iteration):
         """
         Trim leading and trailing repeated numbers from the arrays in _results
         based on the lowest start index and highest end index across all
@@ -80,13 +85,13 @@ class DataProcessor:
 
         global_start_idx = 0
         global_end_idx = float('inf')
-        for data_amounts in self._results.values():
+        for data_amounts in self._results[iteration].values():
             start_idx, end_idx = find_trim_indices(data_amounts)
             global_start_idx = max(global_start_idx, start_idx)
             global_end_idx = min(global_end_idx, end_idx)
 
-        self._results = {
+        self._results[iteration] = {
             party_id: np.array(
                 data_amounts[global_start_idx:global_end_idx + 2])
-            for party_id, data_amounts in self._results.items()
+            for party_id, data_amounts in self._results[iteration].items()
         }

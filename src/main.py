@@ -47,6 +47,12 @@ def validate_config(config):
         if key not in config or config[key] == '':
             print(f"Missing required key '{key}' in configuration.")
             exit(1)
+    print(config)
+    if "iterations" not in config:
+        config["iterations"] = 1
+    if config["iterations"] < 1:
+        print("Error: The number of iterations must be at least 1.")
+        exit(1)
 
 
 def parse_arguments():
@@ -66,6 +72,8 @@ def parse_arguments():
                             "Specify if the Docker image has already been "
                             "built"
                         ))
+    parser.add_argument("--iterations", "-i", type=int,
+                        default=1, help="Number of iterations to run")
     return parser.parse_args()
 
 
@@ -115,7 +123,7 @@ def display_verbose_info(protocol_name, config):
     print()
     print("== Selected configuration ==")
     for key, value in config.items():
-        print(f"{key}\t\t{value}")
+        print(f"{key}\t\t\t{value}")
     print()
 
 
@@ -133,7 +141,10 @@ def run_protocol(config):
         os.path.join(os.path.dirname(__file__), "protocol_manager.py"),
         docker_manager.workdir
     )
-    command = f'python3 protocol_manager.py --command "{config["run"]}"'
+    command = (
+        f'python3 protocol_manager.py --command "{config["run"]}" '
+        f'--iterations {config["iterations"]}'
+    )
     if config["verbose"]:
         command += " --verbose"
     docker_manager.run_command(command)
@@ -142,10 +153,10 @@ def run_protocol(config):
     if not os.path.exists(results_dir):
         os.makedirs(results_dir)
 
-    docker_manager.retrieve_file(
-        f"{docker_manager.workdir}/nethogs_output.txt",
-        os.path.join(results_dir, "nethogs_output.txt")
-    )
+    for run in range(config["iterations"]):
+        remote_file = f"{docker_manager.workdir}/nethogs_{run}.txt"
+        local_file = os.path.join(results_dir, f"nethogs_{run}.txt")
+        docker_manager.retrieve_file(remote_file, local_file)
     docker_manager.stop_container()
     print((int(time2) - int(time1)) / 1000.0, "second(s) elapsed")
 
@@ -171,6 +182,7 @@ if __name__ == "__main__":
     config_path = get_config_path(protocol_path, args.config)
 
     config = parse_config(config_path)
+    config["iterations"] = args.iterations
     validate_config(config)
     config["name"] = args.name
     config["path"] = protocol_path

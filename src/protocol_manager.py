@@ -18,40 +18,42 @@ if __name__ == "__main__":
         parser = argparse.ArgumentParser(description="Protocol Manager")
         parser.add_argument("--command", type=str,
                             required=True, help="Command to run")
+        parser.add_argument("--iterations", type=int, default=1,
+                            help="Number of iterations to run (minimum 1)")
         parser.add_argument("--verbose", action="store_true")
         args = parser.parse_args()
 
-        output_file = "nethogs_output.txt"
+        # Ensure the number of iterations is at least 1
+        if args.iterations < 1:
+            print("Error: The number of iterations must be at least 1.")
+            sys.exit(1)
+
         nethogs_cmd = ["nethogs", "lo", "-a", "-t", "-d", "0.5", "-v", "1"]
 
-        with open(output_file, "w") as outfile:
-            nethogs_proc = subprocess.Popen(
-                nethogs_cmd,
-                stdout=outfile,
-                stderr=subprocess.DEVNULL,
-                preexec_fn=os.setsid
-            )
-            start_time = time.time()
+        for run in range(args.iterations):
+            output_file = f"nethogs_{run}.txt"
 
-            result = subprocess.run(args.command, shell=True)
-            if result.stderr:
-                print(f"Command error:\n{result.stderr}", file=sys.stderr)
+            with open(output_file, "w") as outfile:
+                nethogs_proc = subprocess.Popen(
+                    nethogs_cmd,
+                    stdout=outfile,
+                    stderr=subprocess.DEVNULL,
+                    preexec_fn=os.setsid
+                )
+                start_time = time.time()
 
-            stop_time = time.time()
+                result = subprocess.run(args.command, shell=True)
+                if result.stderr:
+                    print(f"Command error:\n{result.stderr}", file=sys.stderr)
 
-            # Ensure that all traffic is captured by waiting for a second
-            time.sleep(1)
+                stop_time = time.time()
 
-            os.killpg(os.getpgid(nethogs_proc.pid), signal.SIGTERM)
+                # Ensure that all traffic is captured by waiting for a second
+                time.sleep(1)
 
-        print(f"Running took {stop_time - start_time:.2f} seconds")
+                os.killpg(os.getpgid(nethogs_proc.pid), signal.SIGTERM)
 
-        if args.verbose:
-            print("Last 10 lines of nethogs output:")
-            with open(output_file, "r") as outfile:
-                lines = outfile.readlines()
-                for line in lines[-10:]:
-                    print(line.strip())
+            print(f"Iteration {run} took {stop_time - start_time:.2f} seconds")
 
     try:
         main()
