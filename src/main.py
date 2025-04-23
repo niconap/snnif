@@ -47,7 +47,6 @@ def validate_config(config):
         if key not in config or config[key] == '':
             print(f"Missing required key '{key}' in configuration.")
             exit(1)
-    print(config)
     if "iterations" not in config:
         config["iterations"] = 1
     if config["iterations"] < 1:
@@ -170,6 +169,7 @@ def process_data(config):
     processor = DataProcessor(config)
     processor.parse_nethogs()
     processor.nethogs_averages()
+    processor.nethogs_speed()
 
 
 if __name__ == "__main__":

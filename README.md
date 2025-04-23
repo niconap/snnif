@@ -16,16 +16,24 @@
 
 ### Usage
 
-To run the framework, use the following command:
+In order to use the framework, the necessary dependencies need to be installed
+on the system. This can be achieved by using a virtual Python environment. By
+using the command below, such a virtual environment will be created and
+activated and the dependencies will be installed.
 
 ```bash
 source setup.sh
 ```
 
-`source` is used here to activate the virtual environment automatically. Remove
-it in case you want to use a different virtual environment.
+`source` is used here to activate the virtual environment automatically.
 
-This will setup a virtual environment and install the required Python packages.
+In case you are managing your virtual environments in a different way, for
+example by using Anaconda, you can create your own virtual environment and
+install the dependencies using `pip`:
+
+```bash
+pip install -r requirements.txt
+```
 
 ### Included protocols
 
@@ -90,7 +98,7 @@ should be in JSON format and should contain the following fields:
     file for _Meteor_ for an example.
 - `image` - The name of the Docker image to build
 - `execfile` - The name of the file to execute in the container (usually this
-  is`<name>.out`, but this depends on the protocol)
+  is `<name>.out`, but that depends on the protocol)
 
 ### Compatibility
 

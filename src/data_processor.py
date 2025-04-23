@@ -80,9 +80,21 @@ class DataProcessor:
             if averages[party_id]:
                 averages[party_id] = np.mean(
                     np.array(averages[party_id]), axis=0
-                ).tolist()
+                )
 
         return averages
+
+    def nethogs_speed(self):
+        """
+        Calculate the speed of data transfer for each party across all
+        iterations.
+        """
+        averages = self.nethogs_averages()
+        speeds = {}
+        for party_id, data_amounts in averages.items():
+            speeds[party_id] = np.diff(data_amounts) / 0.5
+            speeds[party_id] = np.insert(speeds[party_id], 0, 0)
+        return speeds
 
     def _trim_arrays(self, iteration):
         """

@@ -16,4 +16,4 @@ RUN git clone https://github.com/Ye-D/Meteor.git Meteor
 RUN cd Meteor \
     && make all -j$(nproc)
 
-WORKDIR Meteor
+WORKDIR /Meteor

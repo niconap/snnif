@@ -17,4 +17,4 @@ RUN git clone https://github.com/snwagh/securenn-public.git SecureNN
 RUN cd SecureNN \
     && make
 
-WORKDIR SecureNN
+WORKDIR /SecureNN

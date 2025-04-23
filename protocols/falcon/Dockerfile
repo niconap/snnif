@@ -16,4 +16,4 @@ RUN git clone https://github.com/snwagh/falcon-public.git Falcon
 RUN cd Falcon \
     && make all -j$(nproc)
 
-WORKDIR Falcon
+WORKDIR /Falcon
