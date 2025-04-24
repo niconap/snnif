@@ -167,9 +167,7 @@ def process_data(config):
     @param config: Configuration data.
     """
     processor = DataProcessor(config)
-    processor.parse_nethogs()
-    processor.nethogs_averages()
-    processor.nethogs_speed()
+    processor.nethogs_graphs()
 
 
 if __name__ == "__main__":

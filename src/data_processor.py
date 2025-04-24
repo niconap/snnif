@@ -10,6 +10,7 @@ reports.
 import os
 
 import numpy as np
+import matplotlib.pyplot as plt
 
 
 class DataProcessor:
@@ -23,7 +24,40 @@ class DataProcessor:
         self._iterations = config.get("iterations", 1)
         self._results = []
 
-    def parse_nethogs(self):
+    def nethogs_graphs(self):
+        """
+        Generate graphs for the nethogs data.
+        """
+        self._parse_nethogs()
+        averages = self._nethogs_averages()
+        speeds = self._nethogs_speed()
+
+        base_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+        os.makedirs(os.path.join(base_dir, "results"), exist_ok=True)
+        os.makedirs(os.path.join(base_dir, "results/figures"), exist_ok=True)
+
+
+        for party_id, data_amounts in averages.items():
+            xs = np.arange(len(data_amounts)) * 0.5
+            plt.plot(xs, data_amounts, label=f"Data Amounts - party {party_id}")
+        plt.title("Data Amounts for All Parties")
+        plt.xlabel("Time (seconds)")
+        plt.ylabel("Cumulative Data Amount (kB)")
+        plt.legend()
+        plt.savefig("results/figures/data_amounts.png")
+        plt.clf()
+
+        for party_id, speed in speeds.items():
+            xs = np.arange(len(speed)) * 0.5
+            plt.plot(xs, speed, label=f"Speed - party {party_id}")
+        plt.title("Communication Speed for All Parties")
+        plt.xlabel("Time (seconds)")
+        plt.ylabel("Speed (kB/s)")
+        plt.legend()
+        plt.savefig("results/figures/speed.png")
+        plt.clf()
+
+    def _parse_nethogs(self):
         """
         Parse and trim the nethogs output file and populate the results.
         """
@@ -62,7 +96,7 @@ class DataProcessor:
 
             self._trim_arrays(i)
 
-    def nethogs_averages(self):
+    def _nethogs_averages(self):
         """
         Calculate the point wise averages of the data amounts for each party
         across all iterations.
@@ -84,12 +118,12 @@ class DataProcessor:
 
         return averages
 
-    def nethogs_speed(self):
+    def _nethogs_speed(self):
         """
         Calculate the speed of data transfer for each party across all
         iterations.
         """
-        averages = self.nethogs_averages()
+        averages = self._nethogs_averages()
         speeds = {}
         for party_id, data_amounts in averages.items():
             speeds[party_id] = np.diff(data_amounts) / 0.5
