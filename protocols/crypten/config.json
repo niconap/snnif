@@ -1,0 +1,5 @@
+{
+    "run": "export PYTHONPATH=/deeplearning/projects/crypten:/deeplearning:$PYTHONPATH && python3 deeplearning/projects/crypten/examples/tfe_benchmarks/launcher.py --multiprocess",
+    "image": "crypten-image",
+    "execfile": "usr/bin/python3"
+}

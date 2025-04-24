@@ -23,7 +23,6 @@ if __name__ == "__main__":
         parser.add_argument("--verbose", action="store_true")
         args = parser.parse_args()
 
-        # Ensure the number of iterations is at least 1
         if args.iterations < 1:
             print("Error: The number of iterations must be at least 1.")
             sys.exit(1)

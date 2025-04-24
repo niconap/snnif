@@ -74,7 +74,7 @@ class DataProcessor:
                 lines = outfile.readlines()
                 for line in lines:
                     line = line.strip()
-                    if line.startswith(f"./{self._execfile}"):
+                    if line.startswith(f"./{self._execfile}") or line.startswith(f"/{self._execfile}"):
                         parts = line.split()
                         path_parts = parts[0].split("/")
                         if len(path_parts) >= 3:

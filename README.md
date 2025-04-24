@@ -98,7 +98,18 @@ should be in JSON format and should contain the following fields:
     file for _Meteor_ for an example.
 - `image` - The name of the Docker image to build
 - `execfile` - The name of the file to execute in the container (usually this
-  is `<name>.out`, but that depends on the protocol)
+  is `<name>.out`, but that depends on the protocol). If you are not sure what
+  this should be, run the protocol once with this field set to some dummy value
+  and check `results/nethogs_<num>.txt`, scroll down to the bottom and look for
+  a line that has the name in it. For example, here the name should be
+  `Meteor.out`:
+  ```
+  Refreshing:
+  ./Meteor.out/34/0	1860.98	0
+  ./Meteor.out/35/0	1953.95	0
+  ./Meteor.out/36/0	1395.53	0
+  unknown TCP/0/0	0	0
+  ```
 
 ### Compatibility
 
