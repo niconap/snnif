@@ -42,8 +42,9 @@ class DataProcessor:
 
 
         for party_id, data_amounts in averages.items():
-            xs = np.arange(len(data_amounts)) * self._target_delay
-            plt.plot(xs, data_amounts, label=f"Data Amounts - party {party_id}")
+            trimmed = self._trim_array(data_amounts)
+            xs = np.arange(len(trimmed)) * self._target_delay
+            plt.plot(xs, trimmed, label=f"Data Amounts - party {party_id}")
         plt.title("Data Amounts for All Parties")
         plt.xlabel("Time (seconds)")
         plt.ylabel("Cumulative Data Amount (kB)")
@@ -52,8 +53,9 @@ class DataProcessor:
         plt.clf()
 
         for party_id, speed in speeds.items():
-            xs = np.arange(len(speed)) * self._target_delay
-            plt.plot(xs, speed, label=f"Speed - party {party_id}")
+            trimmed = self._trim_array(speed)
+            xs = np.arange(len(trimmed)) * self._target_delay
+            plt.plot(xs, trimmed, label=f"Speed - party {party_id}")
         plt.title("Communication Speed for All Parties")
         plt.xlabel("Time (seconds)")
         plt.ylabel("Speed (kB/s)")
@@ -203,36 +205,16 @@ class DataProcessor:
         return speeds
 
 
-    def _trim_arrays(self, iteration):
+    def _trim_array(self, arr):
         """
-        Trim leading and trailing repeated numbers from the arrays in _results
-        based on the lowest start index and highest end index across all
-        arrays.
+        Trim a numpy array to remove repeating values at the end.
         """
-        def find_trim_indices(array):
-            """
-            Find the start and end indices for trimming an array.
-            """
-            start_idx = 0
-            while (start_idx < len(array) - 1 and
-                   array[start_idx] == array[start_idx + 1]):
-                start_idx += 1
+        end_val = arr[-1]
+        change_indices = np.where(arr != end_val)[0]
+        if change_indices.size == 0:
+            result = np.array([end_val])
+        else:
+            last_unique_index = change_indices[-1] + 1
+            result = np.concatenate([arr[:last_unique_index], [end_val]])
 
-            end_idx = len(array) - 1
-            while end_idx > 0 and array[end_idx] == array[end_idx - 1]:
-                end_idx -= 1
-
-            return start_idx, end_idx
-
-        global_start_idx = 0
-        global_end_idx = float('inf')
-        for data_amounts in self._results[iteration].values():
-            start_idx, end_idx = find_trim_indices(data_amounts)
-            global_start_idx = max(global_start_idx, start_idx)
-            global_end_idx = min(global_end_idx, end_idx)
-
-        self._results[iteration] = {
-            party_id: np.array(
-                data_amounts[global_start_idx:global_end_idx + 2])
-            for party_id, data_amounts in self._results[iteration].items()
-        }
+        return result
