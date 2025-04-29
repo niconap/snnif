@@ -82,6 +82,22 @@ class DockerManager:
         if self._verbose:
             print(f"Building Docker image '{self._image_name}'...")
 
+        # If the image already exists, it should be deleted first to ensure all
+        # changes are applied.
+        try:
+            client.images.remove(self._image_name, force=True)
+            if self._verbose:
+                print(f"Removed existing image '{self._image_name}'.")
+        except docker.errors.ImageNotFound:
+            if self._verbose:
+                print(f"No existing image '{self._image_name}' to remove.")
+        except docker.errors.APIError as e:
+            print(f"Error removing image: {e}")
+            exit(1)
+        except Exception as e:
+            print(f"Unexpected error: {e}")
+            exit(1)
+
         try:
             for line in client.api.build(
                 path=self._path,
