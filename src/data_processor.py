@@ -11,6 +11,7 @@ import os
 
 import numpy as np
 import matplotlib.pyplot as plt
+from scipy.interpolate import interp1d
 
 
 class DataProcessor:
@@ -22,7 +23,10 @@ class DataProcessor:
         """
         self._execfile = config.get("execfile")
         self._iterations = config.get("iterations", 1)
+        self._avg_delays = []
         self._results = []
+        self._averages = None
+        self._target_delay = config.get("target_delay", 0.01)
 
     def nethogs_graphs(self):
         """
@@ -38,7 +42,7 @@ class DataProcessor:
 
 
         for party_id, data_amounts in averages.items():
-            xs = np.arange(len(data_amounts)) * 0.5
+            xs = np.arange(len(data_amounts)) * self._target_delay
             plt.plot(xs, data_amounts, label=f"Data Amounts - party {party_id}")
         plt.title("Data Amounts for All Parties")
         plt.xlabel("Time (seconds)")
@@ -48,7 +52,7 @@ class DataProcessor:
         plt.clf()
 
         for party_id, speed in speeds.items():
-            xs = np.arange(len(speed)) * 0.5
+            xs = np.arange(len(speed)) * self._target_delay
             plt.plot(xs, speed, label=f"Speed - party {party_id}")
         plt.title("Communication Speed for All Parties")
         plt.xlabel("Time (seconds)")
@@ -57,9 +61,45 @@ class DataProcessor:
         plt.savefig("results/figures/speed.png")
         plt.clf()
 
+    def _calculate_iteration_time(self, iteration_index, measurement_amt):
+        """
+        Calculate the average delay for a specific iteration by reading the time
+        from the results/time.txt file.
+
+        :param iteration_index: The index of the current iteration.
+        :param measurement_amt: The number of measurements in the iteration.
+        :return: The average delay for the iteration.
+        """
+        time_file = os.path.join(os.path.dirname(__file__), "../results/time.txt")
+        if not os.path.exists(time_file):
+            print(f"Error: time.txt not found, please run the protocol first")
+            return None
+
+        with open(time_file, "r") as time_file:
+            lines = time_file.readlines()
+            for line in lines:
+                if line.startswith(f"nethogs_{iteration_index}:"):
+                    parts = line.split(":")
+                    iteration_time = float(parts[1].strip())
+                    break
+            else:
+                print(f"Error: iteration_{iteration_index} not found in time.txt")
+                return None
+
+        return iteration_time / measurement_amt if measurement_amt > 0 else 0
+
     def _parse_nethogs(self):
         """
-        Parse and trim the nethogs output file and populate the results.
+        Parse and trim the nethogs output file and populate the results. The
+        results get stored in the following format in self._results:
+        [
+            {
+                "party_id": [data_amounts],
+                ...
+            },
+            ...
+        ]
+        where each dictionary corresponds to an iteration.
         """
         for i in range(self._iterations):
             self._results.append({})
@@ -70,10 +110,13 @@ class DataProcessor:
                       "please run the protocol first")
                 return
 
+            measurement_amt = 0
             with open(output_file, "r") as outfile:
                 lines = outfile.readlines()
                 for line in lines:
                     line = line.strip()
+                    if line.startswith("Refreshing"):
+                        measurement_amt += 1
                     if line.startswith(f"./{self._execfile}") or line.startswith(f"/{self._execfile}"):
                         parts = line.split()
                         path_parts = parts[0].split("/")
@@ -94,28 +137,54 @@ class DataProcessor:
                                 float(data_amount)
                             )
 
-            self._trim_arrays(i)
+            party_ids = sorted(self._results[i].keys())
+            for j, party_id in enumerate(party_ids):
+                self._results[i][j] = self._results[i].pop(party_id)
+
+            avg_delay = self._calculate_iteration_time(i, measurement_amt)
+            if avg_delay is not None:
+                self._avg_delays.append(avg_delay)
 
     def _nethogs_averages(self):
         """
         Calculate the point wise averages of the data amounts for each party
         across all iterations.
         """
-        parties = self._results[0].keys()
-        averages = {party_id: [] for party_id in parties}
+        if self._averages is not None:
+            return self._averages
+
+        time_file = os.path.join(os.path.dirname(__file__), "../results/time.txt")
+        if not os.path.exists(time_file):
+            print(f"Error: time.txt not found, please run the protocol first")
+            return None
+
+        with open(time_file, "r") as time_file:
+            lines = time_file.readlines()
+            max_time = 0
+            for line in lines:
+                if line.startswith("iteration_"):
+                    parts = line.split(":")
+                    iteration_time = float(parts[1].strip())
+                    max_time = max(max_time, iteration_time)
+
+        target_timestamps = np.arange(0, max_time, self._target_delay)
+        interpolated_results = {}
         for i in range(self._iterations):
-            for party_id in parties:
-                if party_id in self._results[i]:
-                    data_amounts = self._results[i][party_id]
-                    if len(data_amounts) > 0:
-                        averages[party_id].append(data_amounts)
+            for party_id, data_amounts in self._results[i].items():
+                if party_id not in interpolated_results:
+                    interpolated_results[party_id] = []
+                orig_times = np.arange(len(data_amounts)) * self._avg_delays[i]
+                interp_func = interp1d(orig_times, data_amounts,
+                                       kind='nearest', bounds_error=False,
+                                       fill_value="extrapolate")
+                resampled = interp_func(target_timestamps)
+                interpolated_results[party_id].append(resampled)
 
-        for party_id in parties:
-            if averages[party_id]:
-                averages[party_id] = np.mean(
-                    np.array(averages[party_id]), axis=0
-                )
+        averages = {}
+        for party_id, resampled_array in interpolated_results.items():
+            averages[party_id] = np.mean(resampled_array, axis=0)
 
+        self._averages = averages
         return averages
 
     def _nethogs_speed(self):
@@ -126,9 +195,13 @@ class DataProcessor:
         averages = self._nethogs_averages()
         speeds = {}
         for party_id, data_amounts in averages.items():
-            speeds[party_id] = np.diff(data_amounts) / 0.5
-            speeds[party_id] = np.insert(speeds[party_id], 0, 0)
+            delay = self._target_delay
+            speed = np.zeros(len(data_amounts))
+            for i in range(1, len(data_amounts)):
+                speed[i] = (data_amounts[i] - data_amounts[i - 1]) / delay
+            speeds[party_id] = speed
         return speeds
+
 
     def _trim_arrays(self, iteration):
         """

@@ -27,7 +27,7 @@ if __name__ == "__main__":
             print("Error: The number of iterations must be at least 1.")
             sys.exit(1)
 
-        nethogs_cmd = ["nethogs", "lo", "-a", "-t", "-d", "0.5", "-v", "1"]
+        nethogs_cmd = ["nethogs", "lo", "-a", "-t", "-d", "0", "-v", "1"]
 
         for run in range(args.iterations):
             output_file = f"nethogs_{run}.txt"
@@ -51,9 +51,10 @@ if __name__ == "__main__":
                 time.sleep(1)
 
                 os.killpg(os.getpgid(nethogs_proc.pid), signal.SIGTERM)
-
-            print(f"Iteration {run} took {stop_time - start_time:.2f} seconds")
-
+                nethogs_stop_time = time.time()
+                with open('time.txt', 'a') as time_file:
+                    time_file.write(f"nethogs_{run}: {nethogs_stop_time - start_time}\n")
+                    time_file.write(f"iteration_{run}: {stop_time - start_time}\n")
     try:
         main()
     except KeyboardInterrupt:
