@@ -10,6 +10,9 @@ information is passed to the Docker manager.
 import argparse
 import os
 import json
+import shutil
+import time
+import subprocess
 
 from docker_manager import DockerManager
 from data_processor import DataProcessor
@@ -132,32 +135,59 @@ def run_protocol(config):
 
     @param config: Configuration data.
     """
+    scaphandre_path = shutil.which("scaphandre")
+
+    if scaphandre_path is None:
+        print("Error: scaphandre is not installed or not in PATH")
+        sys.exit(1)
+    else:
+        print("scaphandre_path:", scaphandre_path)
+
     docker_manager = DockerManager(config)
     docker_manager.build_image()
     docker_manager.run_container()
-    time1 = docker_manager.run_command("date +%s%3N")
-    docker_manager.copy_file(
-        os.path.join(os.path.dirname(__file__), "protocol_manager.py"),
-        docker_manager.workdir
-    )
-    command = (
-        f'python3 protocol_manager.py --command "{config["run"]}" '
-        f'--iterations {config["iterations"]}'
-    )
-    if config["verbose"]:
-        command += " --verbose"
-    docker_manager.run_command(command)
-    time2 = docker_manager.run_command("date +%s%3N")
-    results_dir = os.path.join(os.getcwd(), "results")
-    if not os.path.exists(results_dir):
-        os.makedirs(results_dir)
+    try:
+        docker_manager.copy_file(
+            os.path.join(os.path.dirname(__file__), "protocol_manager.py"),
+            docker_manager.workdir
+        )
+        command = (
+            f'python3 protocol_manager.py --command "{config["run"]}" '
+            f'--iterations {config["iterations"]}'
+        )
+        if config["verbose"]:
+            command += " --verbose"
 
-    for run in range(config["iterations"]):
-        remote_file = f"{docker_manager.workdir}/nethogs_{run}.txt"
-        local_file = os.path.join(results_dir, f"nethogs_{run}.txt")
-        docker_manager.retrieve_file(remote_file, local_file)
-    docker_manager.stop_container()
-    print((int(time2) - int(time1)) / 1000.0, "second(s) elapsed")
+        with open("result_scaphandre.json", "w") as f:
+            f.write("")
+
+        scaphandre_proc = subprocess.Popen(
+            ["sudo", "scaphandre", "json", "-s", "0", "--step-nano", "100000", "--containers", "-f", "results/result_scaphandre.json"]
+        )
+
+        time1 = docker_manager.run_command("date +%s%3N")
+        docker_manager.run_command(command)
+        time2 = docker_manager.run_command("date +%s%3N")
+
+        scaphandre_proc.terminate()
+        scaphandre_proc.wait()
+
+        results_dir = os.path.join(os.getcwd(), "results")
+        if not os.path.exists(results_dir):
+            os.makedirs(results_dir)
+
+        for run in range(config["iterations"]):
+            remote_file = f"{docker_manager.workdir}/nethogs_{run}.txt"
+            local_file = os.path.join(results_dir, f"nethogs_{run}.txt")
+            docker_manager.retrieve_file(remote_file, local_file)
+            """ remote_file = f"{docker_manager.workdir}/scaphandre_{run}.json"
+            local_file = os.path.join(results_dir, f"scaphandre_{run}.json")
+            docker_manager.retrieve_file(remote_file, local_file) """
+        print((int(time2) - int(time1)) / 1000.0, "second(s) elapsed")
+    except KeyboardInterrupt:
+        print("Program cancelled, deleting the Docker container...")
+    finally:
+        docker_manager.stop_container()
 
 
 def process_data(config):

@@ -8,6 +8,12 @@
     tested with Docker 28.0.4.
 - `python` - Required to run the framework.
   - This framework was tested with Python 3.12.3.
+- _Scaphandre_ - Required to measure the power consumption of the protocol.\
+  - This must be installed on the **host device**. It can be installed using
+    the command below:
+    ```bash
+    sudo apt install scaphandre
+    ```
 
 ### Directories
 
@@ -116,3 +122,7 @@ should be in JSON format and should contain the following fields:
 This framework was written and tested on a machine using Ubuntu 24.04.2 LTS with
 Python 3.12.3. However, it should be possible to run it on any device with
 Python 3 and Docker installed.
+
+Since an amd64 Debian package is used for _Scaphandre_, it is currently not
+possible to use it on any other architectures. This also means the Dockerfile
+**must** use an operating system that is compatible with Debian packages.
