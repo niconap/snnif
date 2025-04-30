@@ -31,8 +31,8 @@ class DataProcessor:
 
     def _parse_scaphandre(self):
         """
-        Process the data gathered by Scaphandre and filter out any processes
-        that did not run in a container.
+        Process  and filter the data gathered by Scaphandre and split the
+        results into separate iterations based on new nethogs instances.
         """
         base_dir = os.path.abspath(
             os.path.join(os.path.dirname(__file__), ".."))
@@ -58,24 +58,39 @@ class DataProcessor:
                         obj = json.loads(chunk)
                         objects.append(obj)
                     except json.JSONDecodeError:
-                        # Usually, Scaphandre does not finish writing to the
-                        # file before the process ends, so the last object is
-                        # incomplete.
+                        # Skip incomplete objects
                         continue
 
-        filtered = {}
+        iterations = []
+        current_iteration = {}
+        seen_pids = set()
+
         for obj in objects:
             for consumer in obj['consumers']:
                 if consumer['container'] is None:
                     continue
+
+                if "nethogs" in consumer['exe'].lower() and  \
+                        consumer['pid'] not in seen_pids:
+                    if current_iteration:
+                        iterations.append(current_iteration)
+                    current_iteration = {}
+                    seen_pids.add(consumer['pid'])
+
+                if self._execfile.lower() not in consumer['exe'].lower():
+                    continue
+
                 unique_key = f"{consumer['exe']}_{consumer['pid']}"
-                if unique_key not in filtered:
-                    filtered[unique_key] = []
-                filtered[unique_key].append(
+                if unique_key not in current_iteration:
+                    current_iteration[unique_key] = []
+                current_iteration[unique_key].append(
                     (consumer['timestamp'], consumer['consumption'])
                 )
 
-        return filtered
+        if current_iteration:
+            iterations.append(current_iteration)
+
+        return iterations
 
     def nethogs_graphs(self):
         """
@@ -275,5 +290,5 @@ class DataProcessor:
 
 
 if __name__ == "__main__":
-    processor = DataProcessor({})
-    processor.filter()
+    processor = DataProcessor({'execfile': "BMRPassive.out", })
+    processor._parse_scaphandre()
