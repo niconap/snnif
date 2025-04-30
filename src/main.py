@@ -7,6 +7,7 @@ command-line arguments and validates the protocol configuration. This
 information is passed to the Docker manager.
 """
 
+import sys
 import argparse
 import os
 import json
@@ -148,7 +149,8 @@ def run_protocol(config):
     docker_manager.build_image()
     docker_manager.run_container()
 
-    sudo_password = getpass.getpass(prompt="Enter your sudo password (for Scaphandre): ")
+    prompt_message = "Enter your sudo password (for Scaphandre): "
+    sudo_password = getpass.getpass(prompt=prompt_message)
     try:
         docker_manager.copy_file(
             os.path.join(os.path.dirname(__file__), "protocol_manager.py"),
@@ -163,11 +165,12 @@ def run_protocol(config):
 
         # The file is created first, otherwise Scaphandre will not be able to
         # write to it. This also ensures the file is flushed.
-        with open("results/result_scaphandre.json", "w") as f:
+        with open("results/scaphandre.json", "w") as f:
             f.write("")
 
         scaphandre_proc = subprocess.Popen(
-            ["sudo", "-S", "scaphandre", "json", "-s", "0", "--step-nano", "100000", "--containers", "-f", "results/result_scaphandre.json"],
+            ["sudo", "-S", "scaphandre", "json", "-s", "0", "--step-nano",
+             "100000", "--containers", "-f", "results/scaphandre.json"],
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
             stdin=subprocess.PIPE
@@ -181,6 +184,7 @@ def run_protocol(config):
         docker_manager.run_command(command)
         time2 = docker_manager.run_command("date +%s%3N")
 
+        time.sleep(1)
         scaphandre_proc.terminate()
         scaphandre_proc.wait()
 
@@ -192,7 +196,9 @@ def run_protocol(config):
             remote_file = f"{docker_manager.workdir}/nethogs_{run}.txt"
             local_file = os.path.join(results_dir, f"nethogs_{run}.txt")
             docker_manager.retrieve_file(remote_file, local_file)
-        docker_manager.retrieve_file(f"{docker_manager.workdir}/time.txt", os.path.join(results_dir, "time.txt"))
+        docker_manager.retrieve_file(
+            f"{docker_manager.workdir}/time.txt", os.path.join(results_dir,
+                                                               "time.txt"))
         print((int(time2) - int(time1)) / 1000.0, "second(s) elapsed in total")
     except KeyboardInterrupt:
         print("Program interrupted, deleting the Docker container...")

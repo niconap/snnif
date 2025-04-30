@@ -53,8 +53,10 @@ if __name__ == "__main__":
                 os.killpg(os.getpgid(nethogs_proc.pid), signal.SIGTERM)
                 nethogs_stop_time = time.time()
                 with open('time.txt', 'a') as time_file:
-                    time_file.write(f"nethogs_{run}: {nethogs_stop_time - start_time}\n")
-                    time_file.write(f"iteration_{run}: {stop_time - start_time}\n")
+                    duration = nethogs_stop_time - start_time
+                    time_file.write(f"nethogs_{run}: {duration}\n")
+                    iteration_duration = stop_time - start_time
+                    time_file.write(f"iteration_{run}: {iteration_duration}\n")
     try:
         main()
     except KeyboardInterrupt:

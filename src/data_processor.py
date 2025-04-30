@@ -8,6 +8,7 @@ reports.
 """
 
 import os
+import json
 
 import numpy as np
 import matplotlib.pyplot as plt
@@ -28,18 +29,67 @@ class DataProcessor:
         self._averages = None
         self._target_delay = config.get("target_delay", 0.01)
 
+    def _parse_scaphandre(self):
+        """
+        Process the data gathered by Scaphandre and filter out any processes
+        that did not run in a container.
+        """
+        base_dir = os.path.abspath(
+            os.path.join(os.path.dirname(__file__), ".."))
+        path = os.path.join(base_dir, "results/scaphandre.json")
+
+        with open(path, "r") as f:
+            data = f.read()
+
+        objects = []
+        depth = 0
+        start = 0
+
+        for i, char in enumerate(data):
+            if char == '{':
+                if depth == 0:
+                    start = i
+                depth += 1
+            elif char == '}':
+                depth -= 1
+                if depth == 0:
+                    chunk = data[start:i+1]
+                    try:
+                        obj = json.loads(chunk)
+                        objects.append(obj)
+                    except json.JSONDecodeError:
+                        # Usually, Scaphandre does not finish writing to the
+                        # file before the process ends, so the last object is
+                        # incomplete.
+                        continue
+
+        filtered = {}
+        for obj in objects:
+            for consumer in obj['consumers']:
+                if consumer['container'] is None:
+                    continue
+                unique_key = f"{consumer['exe']}_{consumer['pid']}"
+                if unique_key not in filtered:
+                    filtered[unique_key] = []
+                filtered[unique_key].append(
+                    (consumer['timestamp'], consumer['consumption'])
+                )
+
+        return filtered
+
     def nethogs_graphs(self):
         """
         Generate graphs for the nethogs data.
         """
+        self._parse_scaphandre()
         self._parse_nethogs()
         averages = self._nethogs_averages()
         speeds = self._nethogs_speed()
 
-        base_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+        base_dir = os.path.abspath(
+            os.path.join(os.path.dirname(__file__), ".."))
         os.makedirs(os.path.join(base_dir, "results"), exist_ok=True)
         os.makedirs(os.path.join(base_dir, "results/figures"), exist_ok=True)
-
 
         for party_id, data_amounts in averages.items():
             trimmed = self._trim_array(data_amounts)
@@ -65,16 +115,17 @@ class DataProcessor:
 
     def _calculate_iteration_time(self, iteration_index, measurement_amt):
         """
-        Calculate the average delay for a specific iteration by reading the time
-        from the results/time.txt file.
+        Calculate the average delay for a specific iteration by reading the
+        time from the results/time.txt file.
 
         :param iteration_index: The index of the current iteration.
         :param measurement_amt: The number of measurements in the iteration.
         :return: The average delay for the iteration.
         """
-        time_file = os.path.join(os.path.dirname(__file__), "../results/time.txt")
+        time_file = os.path.join(os.path.dirname(
+            __file__), "../results/time.txt")
         if not os.path.exists(time_file):
-            print(f"Error: time.txt not found, please run the protocol first")
+            print("Error: time.txt not found, please run the protocol first")
             return None
 
         with open(time_file, "r") as time_file:
@@ -85,7 +136,9 @@ class DataProcessor:
                     iteration_time = float(parts[1].strip())
                     break
             else:
-                print(f"Error: iteration_{iteration_index} not found in time.txt")
+                print(
+                    f"Error: iteration_{iteration_index} not found in time.txt"
+                )
                 return None
 
         return iteration_time / measurement_amt if measurement_amt > 0 else 0
@@ -119,7 +172,8 @@ class DataProcessor:
                     line = line.strip()
                     if line.startswith("Refreshing"):
                         measurement_amt += 1
-                    if line.startswith(f"./{self._execfile}") or line.startswith(f"/{self._execfile}"):
+                    if (line.startswith(f"./{self._execfile}") or
+                            line.startswith(f"/{self._execfile}")):
                         parts = line.split()
                         path_parts = parts[0].split("/")
                         if len(path_parts) >= 3:
@@ -155,9 +209,10 @@ class DataProcessor:
         if self._averages is not None:
             return self._averages
 
-        time_file = os.path.join(os.path.dirname(__file__), "../results/time.txt")
+        time_file = os.path.join(os.path.dirname(
+            __file__), "../results/time.txt")
         if not os.path.exists(time_file):
-            print(f"Error: time.txt not found, please run the protocol first")
+            print("Error: time.txt not found, please run the protocol first")
             return None
 
         with open(time_file, "r") as time_file:
@@ -204,7 +259,6 @@ class DataProcessor:
             speeds[party_id] = speed
         return speeds
 
-
     def _trim_array(self, arr):
         """
         Trim a numpy array to remove repeating values at the end.
@@ -218,3 +272,8 @@ class DataProcessor:
             result = np.concatenate([arr[:last_unique_index], [end_val]])
 
         return result
+
+
+if __name__ == "__main__":
+    processor = DataProcessor({})
+    processor.filter()
