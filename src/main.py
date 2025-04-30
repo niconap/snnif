@@ -78,6 +78,8 @@ def parse_arguments():
                         ))
     parser.add_argument("--iterations", "-i", type=int,
                         default=1, help="Number of iterations to run")
+    parser.add_argument("--max-top", "-m", type=int, default=15,
+                        help="Maximum Scaphandre ranking")
     return parser.parse_args()
 
 
@@ -142,8 +144,6 @@ def run_protocol(config):
     if scaphandre_path is None:
         print("Error: scaphandre is not installed or not in PATH")
         sys.exit(1)
-    else:
-        print("scaphandre_path:", scaphandre_path)
 
     docker_manager = DockerManager(config)
     docker_manager.build_image()
@@ -170,7 +170,8 @@ def run_protocol(config):
 
         scaphandre_proc = subprocess.Popen(
             ["sudo", "-S", "scaphandre", "json", "-s", "0", "--step-nano",
-             "100000", "--containers", "-f", "results/scaphandre.json"],
+             "100000", "--containers", "--max-top-consumers",
+             str(config["max-top"]), "-f", "results/scaphandre.json",],
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
             stdin=subprocess.PIPE
@@ -214,6 +215,7 @@ def process_data(config):
     """
     processor = DataProcessor(config)
     processor.nethogs_graphs()
+    processor.scaphandre_graphs()
 
 
 if __name__ == "__main__":
@@ -233,6 +235,7 @@ if __name__ == "__main__":
     config["path"] = protocol_path
     config["verbose"] = args.verbose
     config["built"] = args.built
+    config["max-top"] = args.max_top
 
     if args.verbose:
         display_verbose_info(args.name, config)

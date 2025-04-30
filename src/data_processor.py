@@ -29,6 +29,14 @@ class DataProcessor:
         self._averages = None
         self._target_delay = config.get("target_delay", 0.01)
 
+    def scaphandre_graphs(self):
+        objects = self._parse_scaphandre()
+        if objects == []:
+            print(
+                "No power data after measuring, try rerunning the program with"
+                " a larger max top amount")
+            return
+
     def _parse_scaphandre(self):
         """
         Process  and filter the data gathered by Scaphandre and split the
@@ -291,4 +299,4 @@ class DataProcessor:
 
 if __name__ == "__main__":
     processor = DataProcessor({'execfile': "BMRPassive.out", })
-    processor._parse_scaphandre()
+    print(processor._parse_scaphandre())
