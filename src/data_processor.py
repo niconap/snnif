@@ -70,7 +70,8 @@ class DataProcessor:
                 obj[new_key] = obj.pop(key)
 
         for i in range(len(objects)):
-            if i not in iteration_times or "start" not in iteration_times[i] or "stop" not in iteration_times[i]:
+            if i not in iteration_times or "start" not in iteration_times[i] \
+                    or "stop" not in iteration_times[i]:
                 print(
                     f"Skipping iteration {i} due to missing start/stop times")
                 continue
@@ -92,7 +93,7 @@ class DataProcessor:
                 plt.plot(xs, ys, linestyle='--', alpha=0.5)
                 plt.scatter(xs, ys, label=f"Party {party_id}")
             plt.title(f"Power consumption for Iteration {i}")
-            plt.xlabel("Time (ms)")
+            plt.xlabel("Time (s)")
             plt.ylabel("Power consumption (W)")
             plt.legend()
             plt.savefig(f"results/figures/scaphandre_{i}.png")
@@ -109,6 +110,11 @@ class DataProcessor:
 
         with open(path, "r") as f:
             data = f.read()
+
+        if not data:
+            print("No data found in scaphandre.json, did you enter the right"
+                  " sudo password?")
+            return []
 
         objects = []
         depth = 0

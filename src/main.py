@@ -152,6 +152,22 @@ def run_protocol(config):
 
     prompt_message = "Enter your sudo password (for Scaphandre): "
     sudo_password = getpass.getpass(prompt=prompt_message)
+
+    sudo_validation_proc = subprocess.Popen(
+        ["sudo", "-S", "echo"],
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        stdin=subprocess.PIPE
+    )
+    sudo_validation_proc.stdin.write(f"{sudo_password}\n".encode())
+    sudo_validation_proc.stdin.flush()
+    sudo_validation_proc.stdin.close()
+    sudo_validation_proc.wait()
+
+    if sudo_validation_proc.returncode != 0:
+        print("Error: Incorrect sudo password.")
+        sys.exit(1)
+
     try:
         docker_manager.copy_file(
             os.path.join(os.path.dirname(__file__), "protocol_manager.py"),
@@ -186,6 +202,7 @@ def run_protocol(config):
         scaphandre_proc.stdin.write(f"{sudo_password}\n".encode())
         scaphandre_proc.stdin.flush()
         sudo_password = None
+
         print("Starting protocol execution...")
 
         time1 = docker_manager.run_command("date +%s%3N")
