@@ -16,6 +16,7 @@ import time
 import subprocess
 import getpass
 
+import psutil
 from docker_manager import DockerManager
 from data_processor import DataProcessor
 
@@ -168,9 +169,14 @@ def run_protocol(config):
         with open("results/scaphandre.json", "w") as f:
             f.write("")
 
+        process_amt = len(psutil.pids())
+        if config["verbose"]:
+            print(f"Found {process_amt} processes, setting --max-top to "
+                  f"{process_amt + 10} to avoid missing any process")
+
         scaphandre_proc = subprocess.Popen(
             ["sudo", "-S", "scaphandre", "json", "-s", "0", "--step-nano",
-             "100000", "--containers", "--max-top-consumers",
+             "10000", "--containers", "--max-top-consumers",
              str(config["max-top"]), "-f", "results/scaphandre.json",],
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
@@ -180,6 +186,7 @@ def run_protocol(config):
         scaphandre_proc.stdin.write(f"{sudo_password}\n".encode())
         scaphandre_proc.stdin.flush()
         sudo_password = None
+        print("Starting protocol execution...")
 
         time1 = docker_manager.run_command("date +%s%3N")
         docker_manager.run_command(command)

@@ -56,7 +56,10 @@ if __name__ == "__main__":
                     duration = nethogs_stop_time - start_time
                     time_file.write(f"nethogs_{run}: {duration}\n")
                     iteration_duration = stop_time - start_time
-                    time_file.write(f"iteration_{run}: {iteration_duration}\n")
+                    time_file.write(
+                        f"iteration_duration_{run}: {iteration_duration}\n")
+                    time_file.write(f"iteration_start_{run}: {start_time}\n")
+                    time_file.write(f"iteration_stop_{run}: {stop_time}\n")
     try:
         main()
     except KeyboardInterrupt:

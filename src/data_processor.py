@@ -30,12 +30,73 @@ class DataProcessor:
         self._target_delay = config.get("target_delay", 0.01)
 
     def scaphandre_graphs(self):
+        """
+        Generate graphs for the Scaphandre data.
+        """
+        time_file_path = os.path.join(
+            os.path.dirname(__file__), "../results/time.txt")
+        if not os.path.exists(time_file_path):
+            print("Error: time.txt not found, please run the protocol first")
+            return
+
+        iteration_times = {}
+        with open(time_file_path, "r") as time_file:
+            lines = time_file.readlines()
+            for line in lines:
+                if line.startswith("iteration_start_"):
+                    parts = line.split(":")
+                    iteration_index = int(parts[0].split("_")[-1])
+                    iteration_times[iteration_index] = {
+                        "start": float(parts[1].strip())}
+                elif line.startswith("iteration_stop_"):
+                    parts = line.split(":")
+                    iteration_index = int(parts[0].split("_")[-1])
+                    if iteration_index in iteration_times:
+                        iteration_times[iteration_index]["stop"] = float(
+                            parts[1].strip())
+
         objects = self._parse_scaphandre()
         if objects == []:
             print(
                 "No power data after measuring, try rerunning the program with"
                 " a larger max top amount")
             return
+
+        for obj in objects:
+            keys = list(obj.keys())
+            keys.sort(key=lambda x: int(x.split("_")[-1]))
+            for i, key in enumerate(keys):
+                new_key = i
+                obj[new_key] = obj.pop(key)
+
+        for i in range(len(objects)):
+            if i not in iteration_times or "start" not in iteration_times[i] or "stop" not in iteration_times[i]:
+                print(
+                    f"Skipping iteration {i} due to missing start/stop times")
+                continue
+
+            start_time = iteration_times[i]["start"]
+            stop_time = iteration_times[i]["stop"]
+
+            plt.figure()
+            for party_id, data in objects[i].items():
+                xs = []
+                ys = []
+                for timestamp, consumption in data:
+                    if start_time <= timestamp <= stop_time:
+                        xs.append(timestamp)
+                        ys.append(consumption)
+                xs = np.array(xs)
+                ys = np.array(ys)
+                xs = xs - xs[0]
+                plt.plot(xs, ys, linestyle='--', alpha=0.5)
+                plt.scatter(xs, ys, label=f"Party {party_id}")
+            plt.title(f"Power consumption for Iteration {i}")
+            plt.xlabel("Time (ms)")
+            plt.ylabel("Power consumption (W)")
+            plt.legend()
+            plt.savefig(f"results/figures/scaphandre_{i}.png")
+            plt.clf()
 
     def _parse_scaphandre(self):
         """
@@ -242,7 +303,7 @@ class DataProcessor:
             lines = time_file.readlines()
             max_time = 0
             for line in lines:
-                if line.startswith("iteration_"):
+                if line.startswith("iteration_duration_"):
                     parts = line.split(":")
                     iteration_time = float(parts[1].strip())
                     max_time = max(max_time, iteration_time)
@@ -298,5 +359,5 @@ class DataProcessor:
 
 
 if __name__ == "__main__":
-    processor = DataProcessor({'execfile': "BMRPassive.out", })
-    print(processor._parse_scaphandre())
+    processor = DataProcessor({'execfile': "meteor.out", })
+    processor.scaphandre_graphs()
