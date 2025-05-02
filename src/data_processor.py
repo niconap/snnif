@@ -79,7 +79,7 @@ class DataProcessor:
             start_time = iteration_times[i]["start"]
             stop_time = iteration_times[i]["stop"]
 
-            plt.figure()
+            plt.figure(figsize=(19.2, 10.8))
             for party_id, data in objects[i].items():
                 xs = []
                 ys = []
@@ -181,10 +181,12 @@ class DataProcessor:
         os.makedirs(os.path.join(base_dir, "results"), exist_ok=True)
         os.makedirs(os.path.join(base_dir, "results/figures"), exist_ok=True)
 
+        plt.figure(figsize=(19.2, 10.8))
         for party_id, data_amounts in averages.items():
             trimmed = self._trim_array(data_amounts)
             xs = np.arange(len(trimmed)) * self._target_delay
-            plt.plot(xs, trimmed, label=f"Data Amounts - party {party_id}")
+            plt.plot(xs, trimmed, linestyle='--', alpha=0.5)
+            plt.scatter(xs, trimmed, label=f"Data Amounts - party {party_id}")
         plt.title("Data Amounts for All Parties")
         plt.xlabel("Time (seconds)")
         plt.ylabel("Cumulative Data Amount (kB)")
@@ -192,10 +194,12 @@ class DataProcessor:
         plt.savefig("results/figures/data_amounts.png")
         plt.clf()
 
+        plt.figure(figsize=(19.2, 10.8))
         for party_id, speed in speeds.items():
             trimmed = self._trim_array(speed)
             xs = np.arange(len(trimmed)) * self._target_delay
-            plt.plot(xs, trimmed, label=f"Speed - party {party_id}")
+            plt.plot(xs, trimmed, linestyle='--', alpha=0.5)
+            plt.scatter(xs, trimmed, label=f"Data Amounts - party {party_id}")
         plt.title("Communication Speed for All Parties")
         plt.xlabel("Time (seconds)")
         plt.ylabel("Speed (kB/s)")
