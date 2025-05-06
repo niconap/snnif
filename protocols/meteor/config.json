@@ -1,5 +1,11 @@
 {
-    "run": "bash -c '(make zero) & (make one) & (make two); wait'",
+    "run": "bash -c 'make command; wait'",
     "image": "meteor-image",
-    "execfile": "Meteor.out"
+    "execfile": "Meteor.out",
+    "extra": true,
+    "extra_files": [
+        "Meteor_P0.txt",
+        "P1.txt",
+        "P2.txt"
+    ]
 }

@@ -15,6 +15,7 @@ import shutil
 import time
 import subprocess
 import getpass
+import importlib
 
 import psutil
 from docker_manager import DockerManager
@@ -134,6 +135,29 @@ def display_verbose_info(protocol_name, config):
     print()
 
 
+def handle_extra(docker_manager, config):
+    """
+    Handle the extra data processing.
+
+    @param config: Configuration data.
+    """
+    if not config['extra']:
+        return
+
+    extra = importlib.import_module(f"extra.{config['name']}")
+    if not hasattr(extra, "retrieve_data"):
+        print(f"Error: extra module '{config['name']}' does not have "
+              "'retrieve_data' function")
+        exit(1)
+    if not hasattr(extra, "process_data"):
+        print(f"Error: extra module '{config['name']}' does not have "
+              "'process_data' function")
+        exit(1)
+
+    data = extra.retrieve_data(docker_manager, config)
+    extra.process_data(data)
+
+
 def run_protocol(config):
     """
     Run the protocol using Docker.
@@ -225,6 +249,7 @@ def run_protocol(config):
             f"{docker_manager.workdir}/time.txt", os.path.join(results_dir,
                                                                "time.txt"))
         print((int(time2) - int(time1)) / 1000.0, "second(s) elapsed in total")
+        handle_extra(docker_manager, config)
     except KeyboardInterrupt:
         print("Program interrupted, deleting the Docker container...")
     finally:

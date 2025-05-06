@@ -118,6 +118,26 @@ should be in JSON format and should contain the following fields:
   unknown TCP/0/0	0	0
   ```
 
+#### Extra measurements
+
+In case the protocol added to the framework gives extra measurements, it is
+possible to take these as well. In this case, the protocol must output the
+wanted measurements to a file in the Docker container. This could be done by
+the protocol itself or by redirecting its output.
+
+In order to enable extra measurements, two additional fields are required in
+the configuration file. `extra` specifies if extra measurements should be taken,
+this should be a boolean value of `true`. `extra_files` specifies which files
+should be taken from the Docker container to get the extra measurements.
+
+Then, inside `src/extra`, create a new Python file with the name of the
+protocol. This name should match the name of the directory in `protocols`. For
+example, for `protocols/meteor`, a file called `src/extra/meteor.py` is
+required. This new Python file should specify two methods:
+`retrieve_data(docker_manager, config)` for retrieving the files and
+`process_data(data)` to process this data. The latter can be left empty using
+a `pass` statement.
+
 ### Compatibility
 
 This framework was written and tested on a machine using Ubuntu 24.04.2 LTS with
