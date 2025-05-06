@@ -11,10 +11,7 @@
 - [_Scaphandre_](https://github.com/hubblo-org/scaphandre) - Required to measure
   the power consumption of the protocol.
   - This must be installed on the **host device**. It can be installed using
-    the command below:
-    ```bash
-    sudo apt install scaphandre
-    ```
+    the instructions [here](https://hubblo-org.github.io/scaphandre-documentation/tutorials/installation-linux.html)
 
 ### Directories
 

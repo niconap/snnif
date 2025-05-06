@@ -80,7 +80,7 @@ def parse_arguments():
                         ))
     parser.add_argument("--iterations", "-i", type=int,
                         default=1, help="Number of iterations to run")
-    parser.add_argument("--max-top", "-m", type=int, default=15,
+    parser.add_argument("--max-top", "-m", type=int, default=0,
                         help="Maximum Scaphandre ranking")
     return parser.parse_args()
 
@@ -206,14 +206,20 @@ def run_protocol(config):
 
         # The file is created first, otherwise Scaphandre will not be able to
         # write to it. This also ensures the file is flushed.
+        if not os.path.exists("results"):
+            os.makedirs("results")
+
         with open("results/scaphandre.json", "w") as f:
             f.write("")
 
-        process_amt = len(psutil.pids())
-        if config["verbose"]:
-            print(f"Found {process_amt} processes, setting --max-top to "
-                  f"{process_amt + 10} to avoid missing any process")
+        if config['max-top'] == 0:
+            process_amt = len(psutil.pids())
+            if config["verbose"]:
+                print(f"Found {process_amt} processes, setting --max-top to "
+                    f"{process_amt + 10} to avoid missing any process")
+            config["max-top"] = process_amt + 10
 
+        print(f"Max top consumers set to {config['max-top']}")
         scaphandre_proc = subprocess.Popen(
             ["sudo", "-S", "scaphandre", "json", "-s", "0", "--step-nano",
              "10000", "--containers", "--max-top-consumers",

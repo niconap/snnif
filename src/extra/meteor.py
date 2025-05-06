@@ -81,4 +81,19 @@ def process_data(data):
 
     @param data: The data parsed by the retrieve_data function
     """
-    print("CREATED GRAPHS!")
+    # Print total communications and total calls from Meteor_P0.txt
+    if 'Meteor_P0.txt' in data:
+        values = data['Meteor_P0.txt']
+        print("Overall Metrics (from Meteor_P0.txt):")
+        print(f"Total Communications: {values['total_comms']}")
+        print(f"Total Calls: {values['total_calls']}")
+        print("\n")
+
+    # Loop through the files and print other metrics
+    for file, values in data.items():
+        print(f"File: {file}")
+        print(f"Wall Clock Times: {values['wall_clock_times']}")
+        print(f"CPU Times: {values['cpu_times']}")
+        print(f"Party Communications: {values['party_comms']}")
+        print(f"Party Rounds: {values['party_rounds']}")
+        print("\n")
