@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """
-extra/meteor.py
+extra/falcon.py
 
-This script is the extra data processor for the Meteor protocol.
+This script is the extra data processor for the Falcon protocol.
 """
 
 import os
@@ -76,14 +76,14 @@ def retrieve_data(docker_manager, config):
 
 def process_data(data):
     """
-    Create plots specifically for the Meteor protocol, these will be stored in
+    Create plots specifically for the Falcon protocol, these will be stored in
     the results directory.
 
     @param data: The data parsed by the retrieve_data function
     """
-    if 'Meteor_P0.txt' in data:
-        values = data['Meteor_P0.txt']
-        print("Overall Metrics (from Meteor_P0.txt):")
+    if 'P0.txt' in data:
+        values = data['P0.txt']
+        print("Overall Metrics (from P0.txt):")
         print(f"Total Communications: {values['total_comms']}")
         print(f"Total Calls: {values['total_calls']}")
         print("\n")

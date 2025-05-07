@@ -54,6 +54,8 @@ def validate_config(config):
         if key not in config or config[key] == '':
             print(f"Missing required key '{key}' in configuration.")
             exit(1)
+    if "extra" not in config:
+        config["extra"] = False
     if "iterations" not in config:
         config["iterations"] = 1
     if config["iterations"] < 1:
