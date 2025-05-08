@@ -18,7 +18,7 @@ RUN cd deeplearning/projects/crypten \
     && pip3 install -r requirements.txt \
     && pip3 install -r requirements.examples.txt
 
-COPY ILSVRC2012_devkit_t12.tar.gz /tmp/
-COPY ILSVRC2012_img_val.tar /tmp/
+COPY ILSVRC2012_devkit_t12.tar.gz /nn_data/
+COPY ILSVRC2012_img_val.tar /nn_data/
 
 WORKDIR /

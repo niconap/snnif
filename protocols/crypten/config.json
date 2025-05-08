@@ -1,5 +1,9 @@
 {
-    "run": "export PYTHONPATH=/deeplearning/projects/crypten:/deeplearning:$PYTHONPATH && python3 deeplearning/projects/crypten/examples/mpc_imagenet/launcher.py --imagenet_folder=/tmp",
+    "run": "export PYTHONPATH=/deeplearning/projects/crypten:/deeplearning:$PYTHONPATH && python3 deeplearning/projects/crypten/examples/tfe_benchmarks/launcher.py --multiprocess >> crypten.txt 2>&1",
     "image": "crypten-image",
-    "execfile": "usr/bin/python3"
+    "execfile": "usr/bin/python3",
+    "extra": true,
+    "extra_files": [
+        "crypten.txt"
+    ]
 }

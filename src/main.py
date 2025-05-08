@@ -27,8 +27,8 @@ def parse_config(config_path):
     Parse the configuration file. In case of an invalid configuration, exit the
     program with an error message.
 
-    @param config_path: Path to the configuration file.
-    @return: Parsed configuration data.
+    :param config_path: Path to the configuration file.
+    :return: Parsed configuration data.
     """
     try:
         with open(config_path, 'r') as file:
@@ -47,7 +47,7 @@ def validate_config(config):
     Validate the configuration data. In case of an invalid configuration, exit
     the program with an error message.
 
-    @param config: Parsed configuration data.
+    :param config: Parsed configuration data.
     """
     required_keys = ["run", "image", "execfile"]
     for key in required_keys:
@@ -67,7 +67,7 @@ def parse_arguments():
     """
     Parse command-line arguments.
 
-    @return: Parsed arguments.
+    :return: Parsed arguments.
     """
     parser = argparse.ArgumentParser(description="snnif")
     parser.add_argument("--name", "-n", type=str, help="Protocol name")
@@ -91,8 +91,8 @@ def get_protocol_path(protocol_name):
     """
     Get the protocol path based on the protocol name.
 
-    @param protocol_name: Name of the protocol.
-    @return: Path to the protocol folder.
+    :param protocol_name: Name of the protocol.
+    :return: Path to the protocol folder.
     """
     protocol_path = os.path.join(os.getcwd(), "protocols", protocol_name)
     if not os.path.exists(protocol_path):
@@ -105,9 +105,9 @@ def get_config_path(protocol_path, config_arg):
     """
     Get the configuration file path.
 
-    @param protocol_path: Path to the protocol folder.
-    @param config_arg: Command-line argument for the config file.
-    @return: Path to the configuration file.
+    :param protocol_path: Path to the protocol folder.
+    :param config_arg: Command-line argument for the config file.
+    :return: Path to the configuration file.
     """
     if config_arg:
         config_path = os.path.abspath(config_arg)
@@ -125,8 +125,8 @@ def display_verbose_info(protocol_name, config):
     """
     Display verbose information about the protocol and configuration.
 
-    @param protocol_name: Name of the protocol.
-    @param config: Configuration data.
+    :param protocol_name: Name of the protocol.
+    :param config: Configuration data.
     """
     print("== Protocol name ==")
     print(protocol_name)
@@ -141,7 +141,7 @@ def handle_extra(docker_manager, config):
     """
     Handle the extra data processing.
 
-    @param config: Configuration data.
+    :param config: Configuration data.
     """
     if not config['extra']:
         return
@@ -164,7 +164,7 @@ def run_protocol(config):
     """
     Run the protocol using Docker.
 
-    @param config: Configuration data.
+    :param config: Configuration data.
     """
     scaphandre_path = shutil.which("scaphandre")
 
@@ -268,7 +268,7 @@ def process_data(config):
     """
     Process the data after running the protocol.
 
-    @param config: Configuration data.
+    :param config: Configuration data.
     """
     processor = DataProcessor(config)
     processor.nethogs_graphs()

@@ -14,8 +14,8 @@ def retrieve_data(docker_manager, config):
     Retrieve the extra data from the docker container and store it into a
     dictionary.
 
-    @param docker_manager: The docker manager managing the active container
-    @returns: The data parsed into a dictionary
+    :param docker_manager: The docker manager managing the active container
+    :return: The data parsed into a dictionary
     """
     results_dir = os.path.join(os.getcwd(), "results")
     for file in config['extra_files']:
@@ -79,7 +79,7 @@ def process_data(data):
     Create plots specifically for the SecureNN protocol, these will be stored in
     the results directory.
 
-    @param data: The data parsed by the retrieve_data function
+    :param data: The data parsed by the retrieve_data function
     """
     if 'P0.txt' in data:
         values = data['P0.txt']
