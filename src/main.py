@@ -166,33 +166,36 @@ def run_protocol(config):
 
     :param config: Configuration data.
     """
+    scaphandre_installed = True
     scaphandre_path = shutil.which("scaphandre")
 
     if scaphandre_path is None:
-        print("Error: scaphandre is not installed or not in PATH")
-        sys.exit(1)
+        scaphandre_installed = False
+        print("Scaphandre is not installed or not in PATH, skipping power"
+              " measurements")
 
     docker_manager = DockerManager(config)
     docker_manager.build_image()
     docker_manager.run_container()
 
-    prompt_message = "Enter your sudo password (for Scaphandre): "
-    sudo_password = getpass.getpass(prompt=prompt_message)
+    if scaphandre_installed:
+        prompt_message = "Enter your sudo password (for Scaphandre): "
+        sudo_password = getpass.getpass(prompt=prompt_message)
 
-    sudo_validation_proc = subprocess.Popen(
-        ["sudo", "-S", "echo"],
-        stdout=subprocess.PIPE,
-        stderr=subprocess.PIPE,
-        stdin=subprocess.PIPE
-    )
-    sudo_validation_proc.stdin.write(f"{sudo_password}\n".encode())
-    sudo_validation_proc.stdin.flush()
-    sudo_validation_proc.stdin.close()
-    sudo_validation_proc.wait()
+        sudo_validation_proc = subprocess.Popen(
+            ["sudo", "-S", "echo"],
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            stdin=subprocess.PIPE
+        )
+        sudo_validation_proc.stdin.write(f"{sudo_password}\n".encode())
+        sudo_validation_proc.stdin.flush()
+        sudo_validation_proc.stdin.close()
+        sudo_validation_proc.wait()
 
-    if sudo_validation_proc.returncode != 0:
-        print("Error: Incorrect sudo password.")
-        sys.exit(1)
+        if sudo_validation_proc.returncode != 0:
+            print("Error: Incorrect sudo password.")
+            sys.exit(1)
 
     try:
         docker_manager.copy_file(
@@ -206,34 +209,35 @@ def run_protocol(config):
         if config["verbose"]:
             command += " --verbose"
 
-        # The file is created first, otherwise Scaphandre will not be able to
-        # write to it. This also ensures the file is flushed.
-        if not os.path.exists("results"):
-            os.makedirs("results")
+        if scaphandre_installed:
+            # The file is created first, otherwise Scaphandre will not be able to
+            # write to it. This also ensures the file is flushed.
+            if not os.path.exists("results"):
+                os.makedirs("results")
 
-        with open("results/scaphandre.json", "w") as f:
-            f.write("")
+            with open("results/scaphandre.json", "w") as f:
+                f.write("")
 
-        if config['max-top'] == 0:
-            process_amt = len(psutil.pids())
-            if config["verbose"]:
-                print(f"Found {process_amt} processes, setting --max-top to "
-                    f"{process_amt + 10} to avoid missing any process")
-            config["max-top"] = process_amt + 10
+            if config['max-top'] == 0:
+                process_amt = len(psutil.pids())
+                if config["verbose"]:
+                    print(f"Found {process_amt} processes, setting --max-top to "
+                        f"{process_amt + 10} to avoid missing any process")
+                config["max-top"] = process_amt + 10
 
-        print(f"Max top consumers set to {config['max-top']}")
-        scaphandre_proc = subprocess.Popen(
-            ["sudo", "-S", "scaphandre", "json", "-s", "0", "--step-nano",
-             "10000", "--containers", "--max-top-consumers",
-             str(config["max-top"]), "-f", "results/scaphandre.json",],
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
-            stdin=subprocess.PIPE
-        )
+            print(f"Max top consumers set to {config['max-top']}")
+            scaphandre_proc = subprocess.Popen(
+                ["sudo", "-S", "scaphandre", "json", "-s", "0", "--step-nano",
+                "10000", "--containers", "--max-top-consumers",
+                str(config["max-top"]), "-f", "results/scaphandre.json",],
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                stdin=subprocess.PIPE
+            )
 
-        scaphandre_proc.stdin.write(f"{sudo_password}\n".encode())
-        scaphandre_proc.stdin.flush()
-        sudo_password = None
+            scaphandre_proc.stdin.write(f"{sudo_password}\n".encode())
+            scaphandre_proc.stdin.flush()
+            sudo_password = None
 
         print("Starting protocol execution...")
 
@@ -242,8 +246,9 @@ def run_protocol(config):
         time2 = docker_manager.run_command("date +%s%3N")
 
         time.sleep(1)
-        scaphandre_proc.terminate()
-        scaphandre_proc.wait()
+        if scaphandre_installed:
+            scaphandre_proc.terminate()
+            scaphandre_proc.wait()
 
         results_dir = os.path.join(os.getcwd(), "results")
         if not os.path.exists(results_dir):
