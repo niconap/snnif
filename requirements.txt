@@ -3,3 +3,4 @@ numpy==2.2.5
 matplotlib==3.10.1
 scipy==1.15.2
 psutil==7.0.0
+pyqt5==5.15.11
