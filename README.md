@@ -39,6 +39,30 @@ install the dependencies using `pip`:
 pip install -r requirements.txt
 ```
 
+#### CLI
+
+In order to use the program through the command line, run the following program
+to find the parameters:
+
+```bash
+python3 src/main.py -h
+```
+
+#### GUI
+
+To use the program through the graphical interface, use the following command:
+
+```bash
+python3 src/window.py
+```
+
+The GUI was tested on X11, but should also work on Wayland. In case it does not
+work correctly, run the following command instead:
+
+```bash
+QT_QPA_PLATFORM=xcb python src/window.py
+```
+
 ### Included protocols
 
 Currently, the following protocols are included by default in this framework:
@@ -46,10 +70,9 @@ Currently, the following protocols are included by default in this framework:
 - [FALCON](https://github.com/snwagh/falcon-public)
 - [Meteor](https://github.com/Ye-D/Meteor)
 - [SecureNN](https://github.com/snwagh/securenn-public)
-
-Chameleon and [ABY³](https://github.com/ladnir/aby3) will likely be added in the
-future. It will also be possible to add custom protocols using configuration
-files.
+- [CrypTen](https://github.com/facebookresearch/CrypTen)
+  - A fork of CrypTen is used, since there are some source code issues in the
+    original repository
 
 #### Configuring a protocol
 

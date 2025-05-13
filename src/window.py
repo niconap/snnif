@@ -81,6 +81,13 @@ class Ui_MainWindow(object):
         self.label = QtWidgets.QLabel(self.centralwidget)
         self.label.setGeometry(QtCore.QRect(10, 20, 211, 19))
         self.label.setObjectName("label")
+
+        self.settingsDivider = QtWidgets.QFrame(self.centralwidget)
+        self.settingsDivider.setFrameShape(QtWidgets.QFrame.HLine)
+        self.settingsDivider.setFrameShadow(QtWidgets.QFrame.Sunken)
+        self.settingsDivider.setLineWidth(2)
+        self.settingsDivider.setGeometry(QtCore.QRect(10, 160, 341, 2))
+
         self.label_3 = QtWidgets.QLabel(self.centralwidget)
         self.label_3.setGeometry(QtCore.QRect(10, 170, 121, 21))
         self.label_3.setObjectName("label_3")
@@ -191,13 +198,18 @@ class Ui_MainWindow(object):
 
     def retranslateUi(self, MainWindow):
         _translate = QtCore.QCoreApplication.translate
-        MainWindow.setWindowTitle(_translate("MainWindow", "MainWindow"))
+        MainWindow.setWindowTitle(_translate(
+            "MainWindow", "SNNI demonstrator"))
         self.iterationsLabel.setText(_translate("MainWindow", "Iterations"))
         self.scaphandreMaxLabel.setText(
-            _translate("MainWindow", "Scaphandre max"))
+            _translate("MainWindow", "Max power ranking"))
         self.label_2.setText(_translate("MainWindow", "Path to config file"))
-        self.label.setText(_translate("MainWindow", "General settings"))
-        self.label_3.setText(_translate("MainWindow", "Protocol settings"))
+        self.label.setText(
+            f"<b>{_translate('MainWindow', 'General settings')}</b>")
+        self.label.setTextFormat(QtCore.Qt.RichText)
+        self.label_3.setText(
+            f"<b>{_translate('MainWindow', 'Protocol settings')}</b>")
+        self.label_3.setTextFormat(QtCore.Qt.RichText)
         self.selectProtocolLabel.setText(
             _translate("MainWindow", "Choose protocol"))
         self.pushButton.setText(_translate("MainWindow", "Run protocol"))
