@@ -1,70 +1,99 @@
-import os
+#!/usr/bin/env python3
+"""
+window.py
+
+This module provides a GUI for selecting and running protocols in the
+demonstrator.
+"""
+
 import sys
-import subprocess
-from PyQt5 import QtCore, QtGui, QtWidgets
+import os
+
+from PyQt5 import QtCore, QtWidgets
 from PyQt5.QtWidgets import QApplication, QMainWindow
 
 
-class Worker(QtCore.QThread):
-    finished = QtCore.pyqtSignal()
-    output = QtCore.pyqtSignal(str)
-    error = QtCore.pyqtSignal(str)
+class Ui_MainWindow(object):
+    def setupUi(self, MainWindow):
+        MainWindow.setObjectName("MainWindow")
+        MainWindow.resize(1320, 820)
+        self.centralwidget = QtWidgets.QWidget(MainWindow)
+        self.centralwidget.setObjectName("centralwidget")
+        self.formLayoutWidget = QtWidgets.QWidget(self.centralwidget)
+        self.formLayoutWidget.setGeometry(QtCore.QRect(10, 40, 341, 111))
+        self.formLayoutWidget.setObjectName("formLayoutWidget")
+        self.formLayout = QtWidgets.QFormLayout(self.formLayoutWidget)
+        self.formLayout.setContentsMargins(0, 0, 0, 0)
+        self.formLayout.setObjectName("formLayout")
+        self.iterationsLabel = QtWidgets.QLabel(self.formLayoutWidget)
+        self.iterationsLabel.setObjectName("iterationsLabel")
+        self.formLayout.setWidget(
+            0, QtWidgets.QFormLayout.LabelRole, self.iterationsLabel)
+        self.iterationsSpinBox = QtWidgets.QSpinBox(self.formLayoutWidget)
+        self.iterationsSpinBox.setMinimum(1)
+        self.iterationsSpinBox.setMaximum(1000)
+        self.iterationsSpinBox.setObjectName("iterationsSpinBox")
+        self.formLayout.setWidget(
+            0, QtWidgets.QFormLayout.FieldRole, self.iterationsSpinBox)
+        self.scaphandreMaxLabel = QtWidgets.QLabel(self.formLayoutWidget)
+        self.scaphandreMaxLabel.setObjectName("scaphandreMaxLabel")
+        self.formLayout.setWidget(
+            1, QtWidgets.QFormLayout.LabelRole, self.scaphandreMaxLabel)
+        self.scaphandreMaxSpinBox = QtWidgets.QSpinBox(self.formLayoutWidget)
+        self.scaphandreMaxSpinBox.setMinimum(15)
+        self.scaphandreMaxSpinBox.setMaximum(999999)
+        self.scaphandreMaxSpinBox.setObjectName("scaphandreMaxSpinBox")
+        self.formLayout.setWidget(
+            1, QtWidgets.QFormLayout.FieldRole, self.scaphandreMaxSpinBox)
+        self.label_2 = QtWidgets.QLabel(self.formLayoutWidget)
+        self.label_2.setObjectName("label_2")
+        self.formLayout.setWidget(
+            2, QtWidgets.QFormLayout.LabelRole, self.label_2)
+        self.textEdit = QtWidgets.QTextEdit(self.formLayoutWidget)
+        self.textEdit.setObjectName("textEdit")
+        self.formLayout.setWidget(
+            2, QtWidgets.QFormLayout.FieldRole, self.textEdit)
+        self.label = QtWidgets.QLabel(self.centralwidget)
+        self.label.setGeometry(QtCore.QRect(10, 20, 211, 19))
+        self.label.setObjectName("label")
+        self.label_3 = QtWidgets.QLabel(self.centralwidget)
+        self.label_3.setGeometry(QtCore.QRect(10, 170, 121, 21))
+        self.label_3.setObjectName("label_3")
+        self.formLayoutWidget_2 = QtWidgets.QWidget(self.centralwidget)
+        self.formLayoutWidget_2.setGeometry(QtCore.QRect(10, 190, 341, 551))
+        self.formLayoutWidget_2.setObjectName("formLayoutWidget_2")
+        self.formLayout_2 = QtWidgets.QFormLayout(self.formLayoutWidget_2)
+        self.formLayout_2.setContentsMargins(0, 0, 0, 0)
+        self.formLayout_2.setObjectName("formLayout_2")
+        self.selectProtocolLabel = QtWidgets.QLabel(self.formLayoutWidget_2)
+        self.selectProtocolLabel.setObjectName("selectProtocolLabel")
+        self.formLayout_2.setWidget(
+            0, QtWidgets.QFormLayout.LabelRole, self.selectProtocolLabel)
+        self.selectProtocolComboBox = QtWidgets.QComboBox(
+            self.formLayoutWidget_2)
+        self.selectProtocolComboBox.setObjectName("selectProtocolComboBox")
+        self.formLayout_2.setWidget(
+            0, QtWidgets.QFormLayout.FieldRole, self.selectProtocolComboBox)
+        self.pushButton = QtWidgets.QPushButton(self.centralwidget)
+        self.pushButton.setGeometry(QtCore.QRect(10, 750, 341, 41))
+        self.pushButton.setObjectName("pushButton")
+        MainWindow.setCentralWidget(self.centralwidget)
+        self.menubar = QtWidgets.QMenuBar(MainWindow)
+        self.menubar.setGeometry(QtCore.QRect(0, 0, 1316, 24))
+        self.menubar.setObjectName("menubar")
+        MainWindow.setMenuBar(self.menubar)
+        self.statusbar = QtWidgets.QStatusBar(MainWindow)
+        self.statusbar.setObjectName("statusbar")
+        MainWindow.setStatusBar(self.statusbar)
 
-    def __init__(self, selected_choice):
-        super().__init__()
-        self.selected_choice = selected_choice
-        self._process = None
-
-    def run(self):
-        self._process = subprocess.Popen(
-            ["python", "src/main.py", "--name", self.selected_choice, "-v"],
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE
-        )
-        try:
-            stdout, stderr = self._process.communicate()
-            if stdout:
-                self.output.emit(stdout.decode())
-            if stderr:
-                self.error.emit(stderr.decode())
-        finally:
-            self.finished.emit()
-
-    def terminate(self):
-        if self._process and self._process.poll() is None:
-            print("Terminating subprocess...")
-            self._process.terminate()
-            try:
-                self._process.wait(timeout=5)
-            except subprocess.TimeoutExpired:
-                print("Force killing subprocess...")
-                self._process.kill()
-
-
-class Ui_MainWindow(QMainWindow):
-    def __init__(self):
-        super().__init__()
-        self.setWindowTitle("SNNIF")
-        self.resize(193, 121)
-
-        self.centralwidget = QtWidgets.QWidget(self)
-        self.setCentralWidget(self.centralwidget)
-
-        self.comboBox = QtWidgets.QComboBox(self.centralwidget)
-        self.comboBox.setGeometry(QtCore.QRect(10, 10, 171, 27))
-
-        self.pushButton = QtWidgets.QPushButton("Run", self.centralwidget)
-        self.pushButton.setGeometry(QtCore.QRect(10, 40, 171, 27))
-        self.pushButton.clicked.connect(self.logSelectedChoice)
-
-        self.statusbar = QtWidgets.QStatusBar(self)
-        self.setStatusBar(self.statusbar)
-
+        self.retranslateUi(MainWindow)
         self.populateComboBox()
+        QtCore.QMetaObject.connectSlotsByName(MainWindow)
+        self.selectProtocolComboBox.currentIndexChanged.connect(
+            self.updateConfigPath)
+        self.updateConfigPath()
 
-        # These will be set during run
-        self.thread = None
-        self.worker = None
+        self.pushButton.clicked.connect(self.runProtocol)
 
     def populateComboBox(self):
         protocols_path = os.path.join(os.getcwd(), "protocols")
@@ -73,42 +102,44 @@ class Ui_MainWindow(QMainWindow):
                 d for d in os.listdir(protocols_path)
                 if os.path.isdir(os.path.join(protocols_path, d))
             ]
-            self.comboBox.addItems(directories)
+            self.selectProtocolComboBox.addItems(directories)
         else:
-            self.comboBox.addItem("No protocols found")
+            self.selectProtocolComboBox.addItem("No protocols found")
 
-    def logSelectedChoice(self):
-        selected_choice = self.comboBox.currentText()
-        self.pushButton.setEnabled(False)
-        self.pushButton.setText("Running...")
+    def updateConfigPath(self):
+        choice = self.selectProtocolComboBox.currentText()
+        if choice and choice != "No protocols found":
+            self.textEdit.setText(f"./protocols/{choice}/config.json")
+        else:
+            self.textEdit.clear()
 
-        self.thread = QtCore.QThread()
-        self.worker = Worker(selected_choice)
-        self.worker.moveToThread(self.thread)
+    def runProtocol(self):
+        print("Running protocol...")
+        print("Iterations:", self.iterationsSpinBox.value())
+        print("Scaphandre max:", self.scaphandreMaxSpinBox.value())
+        print("Config path:", self.textEdit.toPlainText())
+        print("Selected protocol:", self.selectProtocolComboBox.currentText())
 
-        # Signals and slots
-        self.thread.started.connect(self.worker.run)
-        self.worker.finished.connect(self.thread.quit)
-        self.worker.finished.connect(self.worker.deleteLater)
-        self.thread.finished.connect(self.thread.deleteLater)
-
-        self.worker.output.connect(lambda text: print("Output:", text))
-        self.worker.error.connect(lambda text: print("Error:", text))
-
-        self.worker.finished.connect(lambda: self.pushButton.setText("Run"))
-        self.worker.finished.connect(lambda: self.pushButton.setEnabled(True))
-
-        self.thread.start()
-
-    def closeEvent(self, event):
-        print("Window close event triggered.")
-        if self.worker:
-            self.worker.terminate()
-        event.accept()
+    def retranslateUi(self, MainWindow):
+        _translate = QtCore.QCoreApplication.translate
+        MainWindow.setWindowTitle(_translate("MainWindow", "MainWindow"))
+        self.iterationsLabel.setText(_translate("MainWindow", "Iterations"))
+        self.scaphandreMaxLabel.setText(
+            _translate("MainWindow", "Scaphandre max"))
+        self.label_2.setText(_translate("MainWindow", "Path to config file"))
+        self.label.setText(_translate("MainWindow", "General settings"))
+        self.label_3.setText(_translate("MainWindow", "Protocol settings"))
+        self.selectProtocolLabel.setText(
+            _translate("MainWindow", "Choose protocol"))
+        self.pushButton.setText(_translate("MainWindow", "Run protocol"))
 
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)
-    window = Ui_MainWindow()
-    window.show()
+
+    MainWindow = QMainWindow()
+    ui = Ui_MainWindow()
+    ui.setupUi(MainWindow)
+    MainWindow.show()
+
     sys.exit(app.exec_())

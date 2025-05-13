@@ -210,8 +210,8 @@ def run_protocol(config):
             command += " --verbose"
 
         if scaphandre_installed:
-            # The file is created first, otherwise Scaphandre will not be able to
-            # write to it. This also ensures the file is flushed.
+            # The file is created first, otherwise Scaphandre will not be able
+            # to write to it. This also ensures the file is flushed.
             if not os.path.exists("results"):
                 os.makedirs("results")
 
@@ -221,15 +221,16 @@ def run_protocol(config):
             if config['max-top'] == 0:
                 process_amt = len(psutil.pids())
                 if config["verbose"]:
-                    print(f"Found {process_amt} processes, setting --max-top to "
-                        f"{process_amt + 10} to avoid missing any process")
+                    print(f"Found {process_amt} processes, setting --max-top "
+                          f"to {process_amt + 10} to avoid missing any process"
+                          )
                 config["max-top"] = process_amt + 10
 
             print(f"Max top consumers set to {config['max-top']}")
             scaphandre_proc = subprocess.Popen(
                 ["sudo", "-S", "scaphandre", "json", "-s", "0", "--step-nano",
-                "10000", "--containers", "--max-top-consumers",
-                str(config["max-top"]), "-f", "results/scaphandre.json",],
+                 "10000", "--containers", "--max-top-consumers",
+                 str(config["max-top"]), "-f", "results/scaphandre.json",],
                 stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE,
                 stdin=subprocess.PIPE
