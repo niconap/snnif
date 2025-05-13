@@ -10,7 +10,32 @@ import sys
 import os
 
 from PyQt5 import QtCore, QtWidgets
-from PyQt5.QtWidgets import QApplication, QMainWindow
+from PyQt5.QtWidgets import (
+    QApplication, QMainWindow, QInputDialog, QLineEdit, QMessageBox
+)
+from PyQt5.QtCore import QThread, pyqtSignal
+
+import utils
+
+
+class ProtocolWorker(QThread):
+    finished = pyqtSignal(bool, str)
+
+    def __init__(self, config, sudo_password):
+        super().__init__()
+        self.config = config
+        self.sudo_password = sudo_password
+
+    def run(self):
+        result = utils.run_protocol(self.config, self.sudo_password)
+        if not result[0]:
+            self.finished.emit(False, result[1])
+            return
+        try:
+            utils.process_data(self.config)
+            self.finished.emit(True, "")
+        except Exception as e:
+            self.finished.emit(False, str(e))
 
 
 class Ui_MainWindow(object):
@@ -114,11 +139,55 @@ class Ui_MainWindow(object):
             self.textEdit.clear()
 
     def runProtocol(self):
-        print("Running protocol...")
-        print("Iterations:", self.iterationsSpinBox.value())
-        print("Scaphandre max:", self.scaphandreMaxSpinBox.value())
-        print("Config path:", self.textEdit.toPlainText())
-        print("Selected protocol:", self.selectProtocolComboBox.currentText())
+        self.pushButton.setEnabled(False)
+        self.pushButton.setText("Running...")
+        config_path = self.textEdit.toPlainText()
+        if config_path.startswith("./"):
+            config_path = os.path.abspath(config_path)
+        config = utils.parse_config(config_path)
+
+        config['iterations'] = self.iterationsSpinBox.value()
+        config['max-top'] = self.scaphandreMaxSpinBox.value()
+        config['path'] = os.path.dirname(config_path)
+        config['verbose'] = True
+        config['name'] = self.selectProtocolComboBox.currentText()
+
+        if utils.validate_config(config) is False:
+            print("Invalid configuration")
+            self.pushButton.setText("Run protocol")
+            self.pushButton.setEnabled(True)
+            return
+
+        sudo_password, ok = QInputDialog.getText(
+            None,
+            "Authorization",
+            ("Enter your sudo password (this is required for power"
+             " measurements)"),
+            QLineEdit.Password
+        )
+        if not ok or not sudo_password:
+            QMessageBox.warning(
+                None,
+                "Sudo Password Required",
+                "Sudo password entry canceled, aborting..."
+            )
+            self.pushButton.setEnabled(True)
+            self.pushButton.setText("Run protocol")
+            return
+
+        self.worker = ProtocolWorker(config, sudo_password)
+        self.worker.finished.connect(self.onProtocolFinished)
+        self.worker.start()
+
+    def onProtocolFinished(self, success, message):
+        if not success:
+            QMessageBox.critical(
+                None,
+                "Error",
+                f"Error running protocol or processing data: {message}"
+            )
+        self.pushButton.setText("Run protocol")
+        self.pushButton.setEnabled(True)
 
     def retranslateUi(self, MainWindow):
         _translate = QtCore.QCoreApplication.translate
