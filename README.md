@@ -167,4 +167,4 @@ host device, which is available for
 [Linux distributions](https://hubblo-org.github.io/scaphandre-documentation/tutorials/installation-linux.html)
 and [Windows](https://hubblo-org.github.io/scaphandre-documentation/tutorials/installation-windows.html).
 However, this framework was not tested on Windows, so it is possible it does not
-work as expected.
+work as expected there.

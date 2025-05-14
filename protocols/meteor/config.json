@@ -1,5 +1,42 @@
 {
     "run": "bash -c 'make command; wait'",
+    "command_template": "bash -c '(./Meteor.out 2 files/IP_${RUN_TYPE} files/keyC files/keyAC files/keyBC ${NETWORK} ${DATASET} ${SECURITY} >>P2.txt &) && (./Meteor.out 1 files/IP_${RUN_TYPE} files/keyB files/keyBC files/keyAB ${NETWORK} ${DATASET} ${SECURITY} >>P1.txt &) && (./Meteor.out 0 files/IP_${RUN_TYPE} files/keyA files/keyAB files/keyAC ${NETWORK} ${DATASET} ${SECURITY} >>Meteor_P0.txt); wait'",
+    "variables": {
+        "RUN_TYPE": {
+            "default": "localhost",
+            "options": [
+                "localhost",
+                "LAN",
+                "WAN"
+            ]
+        },
+        "NETWORK": {
+            "default": "AlexNet",
+            "options": [
+                "SecureML",
+                "Sarda",
+                "MiniONN",
+                "LeNet",
+                "AlexNet",
+                "VGG16"
+            ]
+        },
+        "DATASET": {
+            "default": "CIFAR10",
+            "options": [
+                "MNIST",
+                "CIFAR10",
+                "ImageNet"
+            ]
+        },
+        "SECURITY": {
+            "default": "Semi-honest",
+            "options": [
+                "Semi-honest",
+                "Malicious"
+            ]
+        }
+    },
     "image": "meteor-image",
     "execfile": "Meteor.out",
     "extra": true,

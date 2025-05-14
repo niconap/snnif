@@ -145,11 +145,10 @@ class Ui_MainWindow(object):
             self.selectProtocolComboBox.addItem("No protocols found")
 
     def populateProtocolOptions(self):
-        """
-        Populate the protocol options based on the selected protocol.
-        """
         while self.formLayout_2.rowCount() > 1:
             self.formLayout_2.removeRow(1)
+        self.variable_widgets = {}
+
         protocol_name = self.selectProtocolComboBox.currentText()
         if protocol_name and protocol_name != "No protocols found":
             protocol_path = os.path.join(
@@ -171,6 +170,7 @@ class Ui_MainWindow(object):
                             in var_info["options"]:
                         combo.setCurrentText(var_info["default"])
                     self.formLayout_2.addRow(label, combo)
+                    self.variable_widgets[var_name] = combo
 
     def updateConfigPath(self):
         """
@@ -182,11 +182,15 @@ class Ui_MainWindow(object):
         else:
             self.textEdit.clear()
 
-    def populateTemplate(self):
-        """
-        Populate the template command with the chosen options.
-        """
-        pass
+    def populateTemplate(self, config):
+        template = config['command_template']
+        for var_name in config["variables"]:
+            if var_name in template:
+                combo = self.variable_widgets.get(var_name)
+                if combo is not None:
+                    value = combo.currentText()
+                    template = template.replace(f"${{{var_name}}}", value)
+        return template
 
     def runProtocol(self):
         """
@@ -204,6 +208,10 @@ class Ui_MainWindow(object):
         config['path'] = os.path.dirname(config_path)
         config['verbose'] = True
         config['name'] = self.selectProtocolComboBox.currentText()
+
+        if "variables" in config and 'command_template' in config:
+            command = self.populateTemplate(config)
+            config['run'] = command
 
         if utils.validate_config(config) is False:
             print("Invalid configuration")
