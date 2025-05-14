@@ -167,13 +167,23 @@ class Ui_MainWindow(object):
                         .capitalize()
                     )
                     label = QtWidgets.QLabel(display_name)
-                    combo = QtWidgets.QComboBox()
-                    combo.addItems(var_info["options"])
-                    if "default" in var_info and var_info["default"] \
-                            in var_info["options"]:
-                        combo.setCurrentText(var_info["default"])
-                    self.formLayout_2.addRow(label, combo)
-                    self.variable_widgets[var_name] = combo
+
+                    if "options" in var_info:
+                        combo = QtWidgets.QComboBox()
+                        combo.addItems(var_info["options"])
+                        if "default" in var_info and var_info["default"] \
+                                in var_info["options"]:
+                            combo.setCurrentText(var_info["default"])
+                        self.formLayout_2.addRow(label, combo)
+                        self.variable_widgets[var_name] = combo
+                    elif "min" in var_info and "max" in var_info:
+                        spin = QtWidgets.QSpinBox()
+                        spin.setMinimum(var_info["min"])
+                        spin.setMaximum(var_info["max"])
+                        if "default" in var_info:
+                            spin.setValue(var_info["default"])
+                        self.formLayout_2.addRow(label, spin)
+                        self.variable_widgets[var_name] = spin
 
     def updateConfigPath(self):
         """
@@ -189,9 +199,14 @@ class Ui_MainWindow(object):
         template = config['command_template']
         for var_name in config["variables"]:
             if var_name in template:
-                combo = self.variable_widgets.get(var_name)
-                if combo is not None:
-                    value = combo.currentText()
+                widget = self.variable_widgets.get(var_name)
+                if widget is not None:
+                    if isinstance(widget, QtWidgets.QComboBox):
+                        value = widget.currentText()
+                    elif isinstance(widget, QtWidgets.QSpinBox):
+                        value = str(widget.value())
+                    else:
+                        continue
                     template = template.replace(f"${{{var_name}}}", value)
         return template
 

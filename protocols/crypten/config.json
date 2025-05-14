@@ -1,5 +1,31 @@
 {
     "run": "export PYTHONPATH=/deeplearning/projects/crypten:/deeplearning:$PYTHONPATH && python3 deeplearning/projects/crypten/examples/tfe_benchmarks/launcher.py --multiprocess >> crypten.txt 2>&1",
+    "command_template": "export PYTHONPATH=/deeplearning/projects/crypten:/deeplearning:$PYTHONPATH && python3 deeplearning/projects/crypten/examples/tfe_benchmarks/launcher.py --multiprocess --world_size ${WORLD_SIZE} --network ${NETWORK} --epochs ${EPOCH_AMOUNT} -b ${BATCH_SIZE} >> crypten.txt 2>&1",
+    "variables": {
+        "WORLD_SIZE": {
+            "default": 1,
+            "min": 1,
+            "max": 8
+        },
+        "NETWORK": {
+            "default": "A",
+            "options": [
+                "A",
+                "B",
+                "C"
+            ]
+        },
+        "EPOCH_AMOUNT": {
+            "default": 1,
+            "min": 1,
+            "max": 10
+        },
+        "BATCH_SIZE": {
+            "default": 256,
+            "min": 1,
+            "max": 512
+        }
+    },
     "image": "crypten-image",
     "execfile": "usr/bin/python3",
     "extra": true,
