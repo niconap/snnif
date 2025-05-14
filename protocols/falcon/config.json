@@ -1,5 +1,42 @@
 {
     "run": "bash -c '(./Falcon.out 2 files/IP_localhost files/keyC files/keyAC files/keyBC >>P2.txt &) && (./Falcon.out 1 files/IP_localhost files/keyB files/keyBC files/keyAB >>P1.txt &) && (./Falcon.out 0 files/IP_localhost files/keyA files/keyAB files/keyAC >>P0.txt); wait'",
+    "command_template": "bash -c '(./Falcon.out 2 files/IP_${RUN_TYPE} files/keyC files/keyAC files/keyBC ${NETWORK} ${DATASET} ${SECURITY} >>P2.txt &) && (./Falcon.out 1 files/IP_${RUN_TYPE} files/keyB files/keyBC files/keyAB ${NETWORK} ${DATASET} ${SECURITY} >>P1.txt &) && (./Falcon.out 0 files/IP_${RUN_TYPE} files/keyA files/keyAB files/keyAC ${NETWORK} ${DATASET} ${SECURITY} >>P0.txt); wait'",
+    "variables": {
+        "RUN_TYPE": {
+            "default": "localhost",
+            "options": [
+                "localhost",
+                "LAN",
+                "WAN"
+            ]
+        },
+        "NETWORK": {
+            "default": "MiniONN",
+            "options": [
+                "SecureML",
+                "Sarda",
+                "MiniONN",
+                "LeNet",
+                "AlexNet",
+                "VGG16"
+            ]
+        },
+        "DATASET": {
+            "default": "MNIST",
+            "options": [
+                "MNIST",
+                "CIFAR10",
+                "ImageNet"
+            ]
+        },
+        "SECURITY": {
+            "default": "Semi-honest",
+            "options": [
+                "Semi-honest",
+                "Malicious"
+            ]
+        }
+    },
     "image": "falcon-image",
     "execfile": "Falcon.out",
     "extra": true,

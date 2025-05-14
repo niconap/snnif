@@ -123,11 +123,17 @@ class Ui_MainWindow(object):
         QtCore.QMetaObject.connectSlotsByName(MainWindow)
         self.selectProtocolComboBox.currentIndexChanged.connect(
             self.updateConfigPath)
+        self.selectProtocolComboBox.currentIndexChanged.connect(
+            self.populateProtocolOptions)
         self.updateConfigPath()
+        self.populateProtocolOptions()
 
         self.pushButton.clicked.connect(self.runProtocol)
 
     def populateComboBox(self):
+        """
+        Populate the protocol selection combo box with available protocols.
+        """
         protocols_path = os.path.join(os.getcwd(), "protocols")
         if os.path.exists(protocols_path) and os.path.isdir(protocols_path):
             directories = [
@@ -138,14 +144,54 @@ class Ui_MainWindow(object):
         else:
             self.selectProtocolComboBox.addItem("No protocols found")
 
+    def populateProtocolOptions(self):
+        """
+        Populate the protocol options based on the selected protocol.
+        """
+        while self.formLayout_2.rowCount() > 1:
+            self.formLayout_2.removeRow(1)
+        protocol_name = self.selectProtocolComboBox.currentText()
+        if protocol_name and protocol_name != "No protocols found":
+            protocol_path = os.path.join(
+                os.getcwd(), "protocols", protocol_name)
+            config_path = os.path.join(protocol_path, "config.json")
+            config = utils.parse_config(config_path)
+            if "variables" in config:
+                for var_name, var_info in config["variables"].items():
+                    display_name = (
+                        var_name.lower()
+                        .replace('_', ' ')
+                        .replace('-', ' ')
+                        .capitalize()
+                    )
+                    label = QtWidgets.QLabel(display_name)
+                    combo = QtWidgets.QComboBox()
+                    combo.addItems(var_info["options"])
+                    if "default" in var_info and var_info["default"] \
+                            in var_info["options"]:
+                        combo.setCurrentText(var_info["default"])
+                    self.formLayout_2.addRow(label, combo)
+
     def updateConfigPath(self):
+        """
+        Update the configuration file path based on the selected protocol.
+        """
         choice = self.selectProtocolComboBox.currentText()
         if choice and choice != "No protocols found":
             self.textEdit.setText(f"./protocols/{choice}/config.json")
         else:
             self.textEdit.clear()
 
+    def populateTemplate(self):
+        """
+        Populate the template command with the chosen options.
+        """
+        pass
+
     def runProtocol(self):
+        """
+        Run the selected protocol with the specified options.
+        """
         self.pushButton.setEnabled(False)
         self.pushButton.setText("Running...")
         config_path = self.textEdit.toPlainText()
@@ -187,6 +233,9 @@ class Ui_MainWindow(object):
         self.worker.start()
 
     def onProtocolFinished(self, success, message):
+        """
+        Handle the completion of the protocol run.
+        """
         if not success:
             QMessageBox.critical(
                 None,
