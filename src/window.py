@@ -32,7 +32,10 @@ class ProtocolWorker(QThread):
             self.finished.emit(False, result[1])
             return
         try:
-            utils.process_data(self.config)
+            scaphandre = True
+            if not self.sudo_password:
+                scaphandre = False
+            utils.process_data(self.config, scaphandre)
             self.finished.emit(True, "")
         except Exception as e:
             self.finished.emit(False, str(e))
@@ -229,12 +232,10 @@ class Ui_MainWindow(object):
         if not ok or not sudo_password:
             QMessageBox.warning(
                 None,
-                "Sudo Password Required",
-                "Sudo password entry canceled, aborting..."
+                "Sudo Password Missing",
+                "Power measurements will not be available for this run"
             )
-            self.pushButton.setEnabled(True)
-            self.pushButton.setText("Run protocol")
-            return
+            sudo_password = ""
 
         self.worker = ProtocolWorker(config, sudo_password)
         self.worker.finished.connect(self.onProtocolFinished)

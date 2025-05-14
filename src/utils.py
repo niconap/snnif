@@ -77,19 +77,20 @@ def run_protocol(config, sudo_password=None):
             prompt_message = "Enter your sudo password (for Scaphandre): "
             sudo_password = getpass.getpass(prompt=prompt_message)
 
-        sudo_validation_proc = subprocess.Popen(
-            ["sudo", "-S", "echo"],
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
-            stdin=subprocess.PIPE
-        )
-        sudo_validation_proc.stdin.write(f"{sudo_password}\n".encode())
-        sudo_validation_proc.stdin.flush()
-        sudo_validation_proc.stdin.close()
-        sudo_validation_proc.wait()
+        if sudo_password != "":
+            sudo_validation_proc = subprocess.Popen(
+                ["sudo", "-S", "echo"],
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                stdin=subprocess.PIPE
+            )
+            sudo_validation_proc.stdin.write(f"{sudo_password}\n".encode())
+            sudo_validation_proc.stdin.flush()
+            sudo_validation_proc.stdin.close()
+            sudo_validation_proc.wait()
 
-        if sudo_validation_proc.returncode != 0:
-            return False, "Incorrect sudo password"
+            if sudo_validation_proc.returncode != 0:
+                return False, "Incorrect sudo password"
 
     try:
         docker_manager.copy_file(
@@ -103,7 +104,7 @@ def run_protocol(config, sudo_password=None):
         if config["verbose"]:
             command += " --verbose"
 
-        if scaphandre_installed:
+        if scaphandre_installed and sudo_password != "":
             # The file is created first, otherwise Scaphandre will not be able
             # to write to it. This also ensures the file is flushed.
             if not os.path.exists("results"):
@@ -141,7 +142,7 @@ def run_protocol(config, sudo_password=None):
         time2 = docker_manager.run_command("date +%s%3N")
 
         time.sleep(1)
-        if scaphandre_installed:
+        if scaphandre_installed and sudo_password != "":
             scaphandre_proc.terminate()
             scaphandre_proc.wait()
 
@@ -188,7 +189,7 @@ def handle_extra(docker_manager, config):
     extra.process_data(data)
 
 
-def process_data(config):
+def process_data(config, scaphandre=True):
     """
     Process the data after running the protocol.
 
@@ -196,4 +197,5 @@ def process_data(config):
     """
     processor = DataProcessor(config)
     processor.nethogs_graphs()
-    processor.scaphandre_graphs()
+    if scaphandre:
+        processor.scaphandre_graphs()
