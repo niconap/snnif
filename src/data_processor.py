@@ -23,6 +23,7 @@ class DataProcessor:
         :param config: Configuration data for the protocol.
         """
         self._execfile = config.get("execfile")
+        self._name = config.get('name')
         self._iterations = config.get("iterations", 1)
         self._avg_delays = []
         self._results = []
@@ -96,7 +97,7 @@ class DataProcessor:
             plt.xlabel("Time (s)")
             plt.ylabel("Power consumption (W)")
             plt.legend()
-            plt.savefig(f"results/figures/scaphandre_{i}.png")
+            plt.savefig(f"results/figures/scaphandre_{self._name}_{i}.png")
             plt.clf()
 
     def _parse_scaphandre(self):
@@ -191,7 +192,7 @@ class DataProcessor:
         plt.xlabel("Time (seconds)")
         plt.ylabel("Cumulative Data Amount (kB)")
         plt.legend()
-        plt.savefig("results/figures/data_amounts.png")
+        plt.savefig(f"results/figures/data_amounts_{self._name}.png")
         plt.clf()
 
         plt.figure(figsize=(19.2, 10.8))
@@ -199,12 +200,13 @@ class DataProcessor:
             trimmed = self._trim_array(speed)
             xs = np.arange(len(trimmed)) * self._target_delay
             plt.plot(xs, trimmed, linestyle='--', alpha=0.5)
-            plt.scatter(xs, trimmed, label=f"Data Amounts - party {party_id}")
+            plt.scatter(
+                xs, trimmed, label=f"Communication Speed - party {party_id}")
         plt.title("Communication Speed for All Parties")
         plt.xlabel("Time (seconds)")
         plt.ylabel("Speed (kB/s)")
         plt.legend()
-        plt.savefig("results/figures/speed.png")
+        plt.savefig(f"results/figures/speed_{self._name}.png")
         plt.clf()
 
     def _calculate_iteration_time(self, iteration_index, measurement_amt):
