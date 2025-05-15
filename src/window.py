@@ -158,6 +158,21 @@ class Ui_MainWindow(object):
                 os.getcwd(), "protocols", protocol_name)
             config_path = os.path.join(protocol_path, "config.json")
             config = utils.parse_config(config_path)
+
+            if "modes" in config:
+                mode_label = QtWidgets.QLabel("Mode")
+                self.modeComboBox = QtWidgets.QComboBox()
+                self.modeComboBox.addItems(config["modes"].keys())
+                default_mode = config.get("default_mode")
+                if default_mode and default_mode in config["modes"]:
+                    self.modeComboBox.setCurrentText(default_mode)
+                self.formLayout_2.addRow(mode_label, self.modeComboBox)
+                self.variable_widgets["MODE"] = self.modeComboBox
+
+                self.modeComboBox.currentIndexChanged.connect(
+                    lambda: self.updateConfigPath()
+                )
+
             if "variables" in config:
                 for var_name, var_info in config["variables"].items():
                     display_name = (
@@ -195,9 +210,12 @@ class Ui_MainWindow(object):
         else:
             self.textEdit.clear()
 
-    def populateTemplate(self, config):
-        template = config['command_template']
-        for var_name in config["variables"]:
+    def populateTemplate(self, template_config, variables):
+        """
+        Substitute variables in the command template.
+        """
+        template = template_config['command_template']
+        for var_name in variables:
             if var_name in template:
                 widget = self.variable_widgets.get(var_name)
                 if widget is not None:
@@ -227,8 +245,16 @@ class Ui_MainWindow(object):
         config['verbose'] = True
         config['name'] = self.selectProtocolComboBox.currentText()
 
-        if "variables" in config and 'command_template' in config:
-            command = self.populateTemplate(config)
+        if "modes" in config and hasattr(self, "modeComboBox"):
+            selected_mode = self.modeComboBox.currentText()
+            mode_config = config["modes"].get(selected_mode, {})
+            if "command_template" in mode_config:
+                command = self.populateTemplate(
+                    mode_config, config.get("variables", {}))
+                config['run'] = command
+                config['mode'] = selected_mode
+        elif "variables" in config and 'command_template' in config:
+            command = self.populateTemplate(config, config["variables"])
             config['run'] = command
 
         if utils.validate_config(config) is False:

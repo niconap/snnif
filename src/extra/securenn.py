@@ -18,6 +18,8 @@ def retrieve_data(docker_manager, config):
     :return: The data parsed into a dictionary
     """
     results_dir = os.path.join(os.getcwd(), "results")
+    if config['mode'] == '3PC':
+        config['extra_files'].remove('P3.txt')
     for file in config['extra_files']:
         local_file = os.path.join(results_dir, file)
         docker_manager.retrieve_file(
